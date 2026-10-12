@@ -1,0 +1,8 @@
+Benom
+Copyright 2026 fa137
+
+Benom is a VS Code color theme derived from the "Venom" palette of black-metal-theme-neovim
+(https://github.com/metalelf0/black-metal-theme-neovim), Copyright metalelf0 and contributors,
+licensed under the Apache License 2.0 (see LICENSE). The Venom colors are taken from the album
+"Welcome to Hell" (1981). Benom changes: colors are mapped to VS Code workbench and syntax scopes, and
+some are adjusted for contrast (see docs/ARCHITECTURE.md and DECISIONS.md).
