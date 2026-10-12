@@ -224,13 +224,15 @@ function buildVariant(variant, palette, textLiftLog, surfaceLog) {
 
   // Token colors (TextMate): lifted by contrast against the variant
   // background (comments to 4.0, everything else to 4.5).
+  // Every foreground carries the leading '#' — VS Code ignores a bare
+  // RRGGBB value and the syntax color would fall back to default grey.
   const tokenColors = [];
   for (const rule of tokenRules) {
     const target = rule.paletteKey === 'comment' ? COMMENT_TARGET : DEFAULT_TARGET;
     const resolved = resolveTextColor(rule.paletteKey, variant, palette, liftCache, target);
     const entry = {
       scope: rule.scopes,
-      settings: { foreground: resolved.hex.slice(1).toUpperCase() },
+      settings: { foreground: resolved.hex.toUpperCase() },
     };
     if (rule.fontStyle) entry.settings.fontStyle = rule.fontStyle;
     tokenColors.push(entry);
@@ -239,25 +241,39 @@ function buildVariant(variant, palette, textLiftLog, surfaceLog) {
     }
   }
 
-  // Semantic token colors.
-  const semanticTokenColors = [];
+  // Semantic token colors: an object mapping a token selector to a style,
+  // e.g. "type": { "foreground": "#FC302E" }. An array of {name, scope,
+  // settings} entries is the wrong shape and VS Code silently ignores it.
+  const semanticTokenColors = {};
   for (const rule of semanticTokenRules) {
     const target = rule.paletteKey === 'comment' ? COMMENT_TARGET : DEFAULT_TARGET;
     const resolved = resolveTextColor(rule.paletteKey, variant, palette, liftCache, target);
-    semanticTokenColors.push({
-      name: rule.type,
-      scope: rule.type,
-      settings: {
-        foreground: resolved.hex.slice(1).toUpperCase(),
-        ...(rule.fontStyle ? { fontStyle: rule.fontStyle } : {}),
-      },
-    });
+    const style = { foreground: resolved.hex.toUpperCase() };
+    if (rule.fontStyle) style.fontStyle = rule.fontStyle;
+    semanticTokenColors[rule.type] = style;
     if (resolved.lifted) {
       textLiftLog.add(`semantic:${rule.type}`, resolved.before, resolved.hex, contrast(resolved.hex, variant.background), variant.key);
     }
   }
 
   return { colors, tokenColors, semanticTokenColors };
+}
+
+/**
+ * Per-variant overrides for surface mix factors (t).
+ *
+ * The base variant's editor.background is pure black (#000000), so the
+ * default line-highlight t (0.05) yields #0a0a0a, which is invisible
+ * on black. The base variant uses t 0.09 (about #111111) instead.
+ * The alt variant keeps the default t.
+ */
+const SURFACE_T_OVERRIDES = {
+  base: { 'editor.lineHighlightBackground': 0.09 },
+  alt: {},
+};
+
+function surfaceT(rule, variant) {
+  return SURFACE_T_OVERRIDES[variant.key]?.[rule.id] ?? rule.t;
 }
 
 /** Derive the color for a single workbench rule of any class. */
@@ -273,13 +289,15 @@ function deriveColor(rule, variant, palette, liftCache, mixFg, textLiftLog, surf
       return resolved.hex;
     }
     case 'surface': {
-      const color = mix(variant.background, mixFg, rule.t);
-      surfaceLog.add(rule.id, 'surface', rule.t, variant.key, color, contrast(color, variant.background), contrast(palette.core.fg, color));
+      const t = surfaceT(rule, variant);
+      const color = mix(variant.background, mixFg, t);
+      surfaceLog.add(rule.id, 'surface', t, variant.key, color, contrast(color, variant.background), contrast(palette.core.fg, color));
       return color;
     }
     case 'line': {
-      const color = mix(variant.background, mixFg, rule.t);
-      surfaceLog.add(rule.id, 'line', rule.t, variant.key, color, contrast(color, variant.background), null);
+      const t = surfaceT(rule, variant);
+      const color = mix(variant.background, mixFg, t);
+      surfaceLog.add(rule.id, 'line', t, variant.key, color, contrast(color, variant.background), null);
       return color;
     }
     case 'chrome': {

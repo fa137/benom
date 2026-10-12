@@ -1,14 +1,12 @@
-.vscodeignore
-.gitignore
-**/.git
-**/.gitignore
-**/node_modules
-**/DECISIONS.md
-**/docs
-**/samples
-**/scripts
-**/src
-**/test
-**/.vscode-test
-**/tsconfig.json
-**/package-lock.json
+# Deny by default, then allow exactly the files that ship in the .vsix.
+# A deny-list would ship any folder this file does not name (for example
+# .github/workflows); this allow-list guarantees the exact file list.
+**
+
+!package.json
+!themes/*.json
+!icon.png
+!README.md
+!CHANGELOG.md
+!LICENSE
+!NOTICE

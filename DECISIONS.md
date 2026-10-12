@@ -56,10 +56,12 @@ The mix foreground is Venom's `fg` (#c1c1c1). Because the mix
 factors are small (0.05-0.26), surfaces and lines stay quiet
 (1.0-1.9:1 against the background) instead of the loud grey wall
 that lifting them to a text-contrast target produced. The smallest
-steps (line highlight at t=0.05, section header at t=0.06) land
-just above 1.0:1 on the pure-black base variant because black has
-zero luminance; that is the first visible step above the
+steps land just above 1.0:1 on the pure-black base variant because
+black has zero luminance; that is the first visible step above the
 background and is still far below the 3.0:1 loudness threshold.
+The base variant uses t=0.09 for the line highlight (about #111111):
+the default t=0.05 yields #0a0a0a, which is invisible on black.
+The alt variant keeps t=0.05 for the line highlight.
 
 ## Alt variant layout
 
@@ -149,7 +151,7 @@ background, and "fg on color" is editor.foreground on that color.
 | Role | Class | Variant | t | Color | vs background | fg on color |
 |---|---|---|---|---|---|---|
 | editor.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| editor.lineHighlightBackground | surface | base | 0.05 | #0a0a0a | 1.06:1 | 11.00:1 |
+| editor.lineHighlightBackground | surface | base | 0.09 | #111111 | 1.11:1 | 10.49:1 |
 | editor.lineHighlightBorder | line | base | 0.12 | #171717 | 1.17:1 |  |
 | editorRuler.foreground | line | base | 0.10 | #131313 | 1.13:1 |  |
 | editorOverviewRuler.border | line | base | 0.12 | #171717 | 1.17:1 |  |
