@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Benom sample</title>
+  <!-- A comment: styles and scripts below. -->
+  <link rel="stylesheet" href="example.css">
+  <style>
+    /* Inline CSS with a selector and property. */
+    body { background: #000000; color: #c1c1c1; }
+  </style>
+</head>
+<body>
+  <header class="site-header" data-theme="benom">
+    <h1 id="title" title="hello &quot;world&quot;">Benom</h1>
+    <nav aria-label="Main">
+      <ul>
+        <li><a href="#themes">Themes</a></li>
+        <li><a href="#install">Install</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <section id="themes">
+      <h2>Variants</h2>
+      <p>Benom uses <strong>#000000</strong> and <em>#211816</em> backgrounds.</p>
+      <img src="icon.png" alt="benom icon" width="128" height="128">
+    </section>
+    <section id="install">
+      <h2>Install</h2>
+      <ol>
+        <li>Open Extensions</li>
+        <li>Search for &ldquo;Benom&rdquo;</li>
+        <li>Click Install</li>
+      </ol>
+      <form action="/subscribe" method="post">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required placeholder="you@example.test">
+        <button type="submit">Subscribe</button>
+      </form>
+    </section>
+  </main>
+  <footer>
+    <small>&copy; 2026 fa137 &mdash; Apache-2.0</small>
+  </footer>
+  <script>
+    // A script with an operator and a template literal.
+    const ratio = (100 / 3).toFixed(1);
+    console.log(`ratio=${ratio}%`);
+  </script>
+</body>
+</html>

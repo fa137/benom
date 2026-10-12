@@ -1,0 +1,57 @@
+# Example YAML for the Benom theme.
+#
+# Exercises comments, strings, escapes, numbers, keywords,
+# types, properties, keys and operators.
+
+name: benom
+version: 0.1.0
+private: true
+license: Apache-2.0
+
+description: >-
+  A dark VS Code theme in two variants,
+  built from the Venom palette.
+
+engines:
+  vscode: "^1.85.0"
+  node: ">=20"
+
+numbers:
+  integer: 128
+  negative: -42
+  float: 0.5
+  exponent: 1.0e-3
+  hex: 0xFF
+  octal: 0o17
+
+strings:
+  plain: "hello world"
+  single: 'single quoted'
+  escaped: "quote: \" backslash: \\ tab:\t"
+  multiline: |
+    line one
+    line two
+
+themes:
+  - label: Benom
+    uiTheme: vs-dark
+    path: ./themes/benom-color-theme.json
+  - label: Benom Alt
+    uiTheme: vs-dark
+    path: ./themes/benom-alt-color-theme.json
+
+galleryBanner:
+  color: "#000000"
+  theme: dark
+
+keywords: [theme, dark, venom, black-metal]
+
+scripts:
+  build: node scripts/build.mjs
+  test: node --test test/*.test.mjs
+  package: npm run build && vsce package
+
+flags:
+  enabled: true
+  disabled: false
+  missing: null

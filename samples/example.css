@@ -1,0 +1,57 @@
+/* Example CSS for the Benom theme.
+ *
+ * Exercises comments, strings, escapes, numbers, keywords,
+ * properties, values, selectors and operators.
+ */
+
+:root {
+  --benom-bg: #000000;
+  --benom-fg: #c1c1c1;
+  --benom-red: #fc302e;
+  --benom-teal: #5f8787;
+}
+
+html,
+body {
+  background-color: var(--benom-bg);
+  color: var(--benom-fg);
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+a[href^="https"] {
+  color: var(--benom-teal);
+  text-decoration: none;
+}
+
+a[href^="https"]:hover {
+  text-decoration: underline;
+}
+
+.code-block::before {
+  content: "/* escaped \" quote */";
+  display: block;
+}
+
+.card {
+  border: 1px solid color-mix(in srgb, var(--benom-fg) 20%, transparent);
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  transition: opacity 0.2s ease-in-out;
+}
+
+@media (min-width: 48em) {
+  .card {
+    width: calc(100% - 2rem);
+  }
+}

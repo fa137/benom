@@ -1,0 +1,58 @@
+{
+  "name": "benom",
+  "displayName": "Benom",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A dark VS Code theme in two variants, built from the Venom palette.",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=20"
+  },
+  "galleryBanner": {
+    "color": "#000000",
+    "theme": "dark"
+  },
+  "keywords": [
+    "theme",
+    "dark",
+    "venom",
+    "black-metal"
+  ],
+  "contributes": {
+    "themes": [
+      {
+        "label": "Benom",
+        "uiTheme": "vs-dark",
+        "path": "./themes/benom-color-theme.json"
+      },
+      {
+        "label": "Benom Alt",
+        "uiTheme": "vs-dark",
+        "path": "./themes/benom-alt-color-theme.json"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "package": "npm run build && vsce package"
+  },
+  "numbers": {
+    "integer": 128,
+    "negative": -42,
+    "float": 0.5,
+    "exponent": 1.0e-3,
+    "big": 1000000
+  },
+  "strings": {
+    "escaped": "quote: \" backslash: \\ tab:\t newline:\n",
+    "unicode": "café ☕",
+    "path": "themes/*.json"
+  },
+  "flags": {
+    "enabled": true,
+    "disabled": false,
+    "missing": null
+  }
+}
