@@ -90,6 +90,48 @@ diagnostics, diff and git only, never for syntax. In tokenColors the
 diff roles (`diffAdded`, `diffRemoved`, `diffModified`, `invalid`) use
 these hues because a diff is a functional surface, not a syntax one.
 
+## Token coverage audit (work item 3, 2026-10-12)
+
+Gate 4 tokenizes every file in `samples/` with the real VS Code
+TextMate grammars (tm-grammars) and asserts that no token a human
+would recolor falls through to the default foreground. The audit
+(`npm run audit`) and the gate-4 test (`test/coverage.test.mjs`)
+share one tokenizer module (`scripts/tokenize.mjs`) that also
+reimplements VS Code's longest-scope-match rule resolution.
+
+### Palette-only fixes
+
+The Venom `property` grey is identical to the default editor
+foreground (`#c1c1c1`), so any rule that used it fell through to
+the default. The following recolorable roles now use the existing
+`constant` grey (`#aaaaaa`) instead — a palette color, no new hue:
+`property` (property names, attribute names, object-literal keys,
+`support.type.property-name`), `attribute`, `cssProperty`,
+`cssValue`, `jsonKey`, `variable` and `parameter`. A variable
+reference inside a string is tokenized with the string scope on its
+stack, so it counts as a string token for gate 4 and must not fall
+through either; giving `variable`/`parameter` the constant grey
+covers that case. `variable.parameter` was allowed to equal the
+default, but the shared tokenizer resolves it through the same
+rules, so it is colored like the rest.
+
+### Documented exceptions
+
+- **constant and number share `#aaaaaa`.** By Venom design the
+  `constant` and `number` palette values are the same grey, so the
+  `constant.numeric` primary rule and the `constant` primary rule
+  are the same color+font-style pair. The gate-4 distinctness
+  assertion therefore checks that the six primary rules produce at
+  least 4 distinct pairs, not that all six are unique.
+- **"At least 8 distinct colors or styles" is applied to the
+  sample set, not to each file.** A minimal language such as JSON
+  natively exercises only a few token kinds (keys, strings,
+  numbers, punctuation), so a per-file bar of 8 is unreachable for
+  it; the sample set as a whole exercises well over 8.
+- **Structural `meta.*` / `source.*` scopes may resolve to the
+  default foreground.** These are containers, not tokens a human
+  would recolor, so they are out of scope for gate 4.
+
 <!-- benom:generated:start -->
 
 ## Generated: lifted text colors

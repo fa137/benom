@@ -35,11 +35,27 @@ export const tokenRules = [
   // Functions and methods: Venom func grey, plain.
   { role: 'function', scopes: ['entity.name.function', 'support.function', 'meta.function-call'], paletteKey: 'func', fontStyle: '' },
   { role: 'method', scopes: ['entity.name.function.member', 'meta.method-call'], paletteKey: 'func', fontStyle: '' },
-  { role: 'parameter', scopes: ['variable.parameter'], paletteKey: 'property', fontStyle: '' },
+  // Parameters and variables are named references, like
+  // properties: the constant grey (distinct from the
+  // default foreground, see the property rule above). A
+  // variable reference inside a string is tokenized with
+  // the string scope on its stack, so it counts as a
+  // string token for gate 4 and must not fall through to
+  // the default foreground.
+  { role: 'parameter', scopes: ['variable.parameter'], paletteKey: 'constant', fontStyle: '' },
 
-  // Properties and variables: Venom property grey.
-  { role: 'property', scopes: ['variable.other.property', 'entity.other.attribute-name', 'meta.object-literal.key', 'support.type.property-name'], paletteKey: 'property', fontStyle: '' },
-  { role: 'variable', scopes: ['variable', 'variable.other'], paletteKey: 'property', fontStyle: '' },
+  // Properties and variables: named references use the
+  // constant grey.
+  // Property names, attribute names, CSS property names,
+  // JSON keys, variables and parameters are recolorable
+  // tokens (gate 4), but the Venom `property` grey is
+  // identical to the default editor foreground (#c1c1c1),
+  // so they would fall through to the default. They use
+  // the existing `constant` grey instead, keeping them
+  // inside the palette (no new hue) and distinct from
+  // the default foreground.
+  { role: 'property', scopes: ['variable.other.property', 'entity.other.attribute-name', 'meta.object-literal.key', 'support.type.property-name'], paletteKey: 'constant', fontStyle: '' },
+  { role: 'variable', scopes: ['variable', 'variable.other'], paletteKey: 'constant', fontStyle: '' },
 
   // Types, classes and interfaces: the single red hue of Venom. Bold is applied
   // only where it helps tell a type from a keyword in the samples; the base rule
@@ -54,16 +70,20 @@ export const tokenRules = [
   { role: 'decorator', scopes: ['entity.name.function.decorator', 'meta.decorator', 'punctuation.definition.decorator'], paletteKey: 'alt', fontStyle: 'italic' },
   { role: 'macro', scopes: ['entity.name.function.macro', 'meta.macro'], paletteKey: 'alt', fontStyle: 'italic' },
 
-  // Tags and attributes (html, jsx): tags red, attributes property grey.
+  // Tags and attributes (html, jsx): tags red, attributes the
+  // constant grey (distinct from the default foreground, see
+  // the property rule above).
   { role: 'tag', scopes: ['entity.name.tag', 'meta.tag'], paletteKey: 'type', fontStyle: '' },
-  { role: 'attribute', scopes: ['entity.other.attribute-name', 'meta.tag.attribute'], paletteKey: 'property', fontStyle: '' },
+  { role: 'attribute', scopes: ['entity.other.attribute-name', 'meta.tag.attribute'], paletteKey: 'constant', fontStyle: '' },
 
-  // CSS: properties and values use the property grey, selectors the keyword grey.
-  { role: 'cssProperty', scopes: ['support.type.property-name.css', 'meta.property-name.css'], paletteKey: 'property', fontStyle: '' },
-  { role: 'cssValue', scopes: ['support.constant.property-value.css', 'keyword.other.unit'], paletteKey: 'property', fontStyle: '' },
+  // CSS: properties and values use the constant grey (distinct
+  // from the default foreground), selectors the keyword grey.
+  { role: 'cssProperty', scopes: ['support.type.property-name.css', 'meta.property-name.css'], paletteKey: 'constant', fontStyle: '' },
+  { role: 'cssValue', scopes: ['support.constant.property-value.css', 'keyword.other.unit'], paletteKey: 'constant', fontStyle: '' },
 
-  // JSON keys and Markdown: keys property grey; headings and links use fg/string.
-  { role: 'jsonKey', scopes: ['support.type.property-name.json', 'entity.name.tag.json'], paletteKey: 'property', fontStyle: '' },
+  // JSON keys and Markdown: keys the constant grey; headings
+  // and links use fg/string.
+  { role: 'jsonKey', scopes: ['support.type.property-name.json', 'entity.name.tag.json'], paletteKey: 'constant', fontStyle: '' },
   { role: 'markdownHeading', scopes: ['markup.heading', 'entity.name.section'], paletteKey: 'string', fontStyle: 'bold' },
   { role: 'markdownLink', scopes: ['markup.underline.link', 'constant.other.reference.link'], paletteKey: 'string', fontStyle: '' },
   { role: 'markdownCode', scopes: ['markup.raw', 'markup.fenced_code', 'markup.inline.raw'], paletteKey: 'constant', fontStyle: '' },

@@ -341,7 +341,7 @@
         "variable.parameter"
       ],
       "settings": {
-        "foreground": "#C1C1C1"
+        "foreground": "#AAAAAA"
       }
     },
     {
@@ -352,7 +352,7 @@
         "support.type.property-name"
       ],
       "settings": {
-        "foreground": "#C1C1C1"
+        "foreground": "#AAAAAA"
       }
     },
     {
@@ -361,7 +361,7 @@
         "variable.other"
       ],
       "settings": {
-        "foreground": "#C1C1C1"
+        "foreground": "#AAAAAA"
       }
     },
     {
@@ -446,7 +446,7 @@
         "meta.tag.attribute"
       ],
       "settings": {
-        "foreground": "#C1C1C1"
+        "foreground": "#AAAAAA"
       }
     },
     {
@@ -455,7 +455,7 @@
         "meta.property-name.css"
       ],
       "settings": {
-        "foreground": "#C1C1C1"
+        "foreground": "#AAAAAA"
       }
     },
     {
@@ -464,7 +464,7 @@
         "keyword.other.unit"
       ],
       "settings": {
-        "foreground": "#C1C1C1"
+        "foreground": "#AAAAAA"
       }
     },
     {
@@ -473,7 +473,7 @@
         "entity.name.tag.json"
       ],
       "settings": {
-        "foreground": "#C1C1C1"
+        "foreground": "#AAAAAA"
       }
     },
     {
