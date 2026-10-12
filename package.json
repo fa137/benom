@@ -1,0 +1,58 @@
+{
+  "name": "benom",
+  "displayName": "Benom",
+  "description": "A dark VS Code theme in two variants, built from the Venom palette.",
+  "version": "0.1.0",
+  "publisher": "fa137",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "vscode": "^1.85.0",
+    "node": ">=20"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "keywords": [
+    "theme",
+    "dark",
+    "venom",
+    "black-metal"
+  ],
+  "galleryBanner": {
+    "color": "#000000",
+    "theme": "dark"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fa137/benom"
+  },
+  "bugs": {
+    "url": "https://github.com/fa137/benom/issues"
+  },
+  "homepage": "https://github.com/fa137/benom#readme",
+  "icon": "icon.png",
+  "contributes": {
+    "themes": [
+      {
+        "label": "Benom",
+        "uiTheme": "vs-dark",
+        "path": "./themes/benom-color-theme.json"
+      },
+      {
+        "label": "Benom Alt",
+        "uiTheme": "vs-dark",
+        "path": "./themes/benom-alt-color-theme.json"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test test/*.test.mjs",
+    "check": "npm run build && node scripts/check.mjs",
+    "package": "echo 'packaging is work item 2'",
+    "publish:vsce": "echo 'publish:vsce is work item 2'",
+    "publish:ovsx": "echo 'publish:ovsx is work item 2'"
+  },
+  "devDependencies": {}
+}
