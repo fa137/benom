@@ -99,21 +99,22 @@ would recolor falls through to the default foreground. The audit
 share one tokenizer module (`scripts/tokenize.mjs`) that also
 reimplements VS Code's longest-scope-match rule resolution.
 
-### Palette-only fixes
+### Identifiers equal plain text; keys and attributes use teal
 
-The Venom `property` grey is identical to the default editor
-foreground (`#c1c1c1`), so any rule that used it fell through to
-the default. The following recolorable roles now use the existing
-`constant` grey (`#aaaaaa`) instead — a palette color, no new hue:
-`property` (property names, attribute names, object-literal keys,
-`support.type.property-name`), `attribute`, `cssProperty`,
-`cssValue`, `jsonKey`, `variable` and `parameter`. A variable
-reference inside a string is tokenized with the string scope on its
-stack, so it counts as a string token for gate 4 and must not fall
-through either; giving `variable`/`parameter` the constant grey
-covers that case. `variable.parameter` was allowed to equal the
-default, but the shared tokenizer resolves it through the same
-rules, so it is colored like the rest.
+Identifiers are meant to read as plain text, so the Venom `property` grey
+(`#c1c1c1`, the default foreground) is used on purpose for `variable`,
+`parameter`, generic `property` (object properties and literal keys) and
+`cssValue`. Gate 4 exempts them. An earlier revision recolored them to the
+`constant` grey (`#aaaaaa`) to satisfy a too-strict test; that made variables
+look identical to numbers and constants, so it was reverted. Instead:
+
+- `jsonKey`, `attribute` (HTML and JSX attribute names) and `cssProperty` use
+  the palette's teal accent (`alt`, `#5f8787`, lifted by the build where it is
+  below contrast). Keys and attribute names then stand apart from values and
+  from plain text without adding a hue.
+- CSS units (`px`, `rem`, `%`) use the number grey, so they stay attached to
+  their number (`cssUnit`).
+- YAML keys stay red because the YAML grammar scopes them as tags.
 
 ### Documented exceptions
 
@@ -179,6 +180,9 @@ lighter shade of the same hue.
 | comment | alt | #505050 | #7b7b7b | 4.11:1 |
 | decorator | alt | #5f8787 | #618a8a | 4.57:1 |
 | macro | alt | #5f8787 | #618a8a | 4.57:1 |
+| attribute | alt | #5f8787 | #618a8a | 4.57:1 |
+| cssProperty | alt | #5f8787 | #618a8a | 4.57:1 |
+| jsonKey | alt | #5f8787 | #618a8a | 4.57:1 |
 | semantic:decorator | alt | #5f8787 | #618a8a | 4.57:1 |
 | semantic:macro | alt | #5f8787 | #618a8a | 4.57:1 |
 | semantic:comment | alt | #505050 | #7b7b7b | 4.11:1 |

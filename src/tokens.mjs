@@ -42,7 +42,7 @@ export const tokenRules = [
   // the string scope on its stack, so it counts as a
   // string token for gate 4 and must not fall through to
   // the default foreground.
-  { role: 'parameter', scopes: ['variable.parameter'], paletteKey: 'constant', fontStyle: '' },
+  { role: 'parameter', scopes: ['variable.parameter'], paletteKey: 'property', fontStyle: '' },
 
   // Properties and variables: named references use the
   // constant grey.
@@ -54,8 +54,8 @@ export const tokenRules = [
   // the existing `constant` grey instead, keeping them
   // inside the palette (no new hue) and distinct from
   // the default foreground.
-  { role: 'property', scopes: ['variable.other.property', 'entity.other.attribute-name', 'meta.object-literal.key', 'support.type.property-name'], paletteKey: 'constant', fontStyle: '' },
-  { role: 'variable', scopes: ['variable', 'variable.other'], paletteKey: 'constant', fontStyle: '' },
+  { role: 'property', scopes: ['variable.other.property', 'entity.other.attribute-name', 'meta.object-literal.key', 'support.type.property-name'], paletteKey: 'property', fontStyle: '' },
+  { role: 'variable', scopes: ['variable', 'variable.other'], paletteKey: 'property', fontStyle: '' },
 
   // Types, classes and interfaces: the single red hue of Venom. Bold is applied
   // only where it helps tell a type from a keyword in the samples; the base rule
@@ -74,16 +74,18 @@ export const tokenRules = [
   // constant grey (distinct from the default foreground, see
   // the property rule above).
   { role: 'tag', scopes: ['entity.name.tag', 'meta.tag'], paletteKey: 'type', fontStyle: '' },
-  { role: 'attribute', scopes: ['entity.other.attribute-name', 'meta.tag.attribute'], paletteKey: 'constant', fontStyle: '' },
+  { role: 'attribute', scopes: ['entity.other.attribute-name', 'meta.tag.attribute'], paletteKey: 'alt', fontStyle: '' },
 
   // CSS: properties and values use the constant grey (distinct
   // from the default foreground), selectors the keyword grey.
-  { role: 'cssProperty', scopes: ['support.type.property-name.css', 'meta.property-name.css'], paletteKey: 'constant', fontStyle: '' },
-  { role: 'cssValue', scopes: ['support.constant.property-value.css', 'keyword.other.unit'], paletteKey: 'constant', fontStyle: '' },
+  { role: 'cssProperty', scopes: ['support.type.property-name.css', 'meta.property-name.css'], paletteKey: 'alt', fontStyle: '' },
+  { role: 'cssValue', scopes: ['support.constant.property-value.css'], paletteKey: 'property', fontStyle: '' },
+  // Units (px, rem, %) belong to their number.
+  { role: 'cssUnit', scopes: ['keyword.other.unit'], paletteKey: 'constant', fontStyle: '' },
 
   // JSON keys and Markdown: keys the constant grey; headings
   // and links use fg/string.
-  { role: 'jsonKey', scopes: ['support.type.property-name.json', 'entity.name.tag.json'], paletteKey: 'constant', fontStyle: '' },
+  { role: 'jsonKey', scopes: ['support.type.property-name.json', 'entity.name.tag.json'], paletteKey: 'alt', fontStyle: '' },
   { role: 'markdownHeading', scopes: ['markup.heading', 'entity.name.section'], paletteKey: 'string', fontStyle: 'bold' },
   { role: 'markdownLink', scopes: ['markup.underline.link', 'constant.other.reference.link'], paletteKey: 'string', fontStyle: '' },
   { role: 'markdownCode', scopes: ['markup.raw', 'markup.fenced_code', 'markup.inline.raw'], paletteKey: 'constant', fontStyle: '' },

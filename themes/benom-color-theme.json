@@ -341,7 +341,7 @@
         "variable.parameter"
       ],
       "settings": {
-        "foreground": "#AAAAAA"
+        "foreground": "#C1C1C1"
       }
     },
     {
@@ -352,7 +352,7 @@
         "support.type.property-name"
       ],
       "settings": {
-        "foreground": "#AAAAAA"
+        "foreground": "#C1C1C1"
       }
     },
     {
@@ -361,7 +361,7 @@
         "variable.other"
       ],
       "settings": {
-        "foreground": "#AAAAAA"
+        "foreground": "#C1C1C1"
       }
     },
     {
@@ -446,7 +446,7 @@
         "meta.tag.attribute"
       ],
       "settings": {
-        "foreground": "#AAAAAA"
+        "foreground": "#5F8787"
       }
     },
     {
@@ -455,12 +455,19 @@
         "meta.property-name.css"
       ],
       "settings": {
-        "foreground": "#AAAAAA"
+        "foreground": "#5F8787"
       }
     },
     {
       "scope": [
-        "support.constant.property-value.css",
+        "support.constant.property-value.css"
+      ],
+      "settings": {
+        "foreground": "#C1C1C1"
+      }
+    },
+    {
+      "scope": [
         "keyword.other.unit"
       ],
       "settings": {
@@ -473,7 +480,7 @@
         "entity.name.tag.json"
       ],
       "settings": {
-        "foreground": "#AAAAAA"
+        "foreground": "#5F8787"
       }
     },
     {

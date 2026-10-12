@@ -54,8 +54,8 @@ const THEME_FILES = [
 ];
 
 // Categories whose tokens must NOT fall through to the default
-// foreground. variable.parameter is deliberately absent: it is
-// allowed to equal the default foreground.
+// foreground. Identifiers (variable, variable.parameter, object keys) are
+// deliberately exempt: they equal the default foreground on purpose.
 const RECOLORABLE = new Set([
   'comment',
   'string',
@@ -167,6 +167,10 @@ test('gate4: recolorable tokens never fall through to the default foreground', a
       const violations = [];
       let recoloredCount = 0;
       for (const token of tokens) {
+        // Identifiers (variables, parameters, object keys, CSS keywords) equal the default foreground on
+        // purpose (DECISIONS.md). A variable inside a template string is judged as an identifier too.
+        const last = token.scopes[token.scopes.length - 1];
+        if (/^(variable|meta\.object-literal\.key|support\.constant\.property-value)/.test(last)) continue;
         const categories = categoriesForToken(token.scopes);
         const recolorable = categories.filter((c) => RECOLORABLE.has(c));
         if (recolorable.length === 0) continue;
