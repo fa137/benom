@@ -1,6 +1,17 @@
-// Gate 2: every color in both themes that has a contrast target in
-// src/palette.json / src/workbench.mjs meets or exceeds that target
-// against its documented background, using WCAG relative luminance.
+// Gate 2: contrast targets for the three classes (text, surface,
+// line) plus chrome, area and accent handling.
+//
+// - text:    lifted against the surface it sits on (`against`) or the
+//            variant background. Targets: 4.5 default, 4.0 comments,
+//            3.0 secondary/inactive.
+// - surface: mix(variantBackground, foreground, t). Gate: vs its
+//            variant background between 1.0:1 and 2.0:1, AND
+//            editor.foreground on it at least 4.5:1.
+// - line:    mix(variantBackground, foreground, t). Gate: vs its
+//            variant background between 1.0:1 and 3.0:1.
+// - chrome:  mix(variantBackground, #000000, 0.25).
+// - area:    the variant background.
+// - accent:  the palette color (no contrast gate; decorative).
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -33,48 +44,181 @@ const VARIANTS = [
   { file: 'themes/benom-alt-color-theme.json', background: '#211816' },
 ];
 
-// Roles with an explicit target. The build lifts these against the
-// variant background; the test asserts the target is met.
-const TARGETS = new Map(
-  workbenchRules
-    .filter((r) => r.target !== undefined)
-    .map((r) => [r.id, r.target]),
-);
+function loadTheme(variant) {
+  return JSON.parse(readFileSync(join(root, variant.file), 'utf8'));
+}
+
+// The background a text role is measured against: its `against`
+// surface if present, else the variant background.
+function textBackground(rule, theme, variant) {
+  return rule.against ? theme.colors[rule.against] : variant.background;
+}
 
 for (const variant of VARIANTS) {
-  test(`gate2: ${variant.file} meets contrast targets`, () => {
-    const theme = JSON.parse(readFileSync(join(root, variant.file), 'utf8'));
-    const colors = theme.colors;
-    let checked = 0;
-    for (const [id, target] of TARGETS) {
-      const value = colors[id];
-      assert.ok(value, `missing color ${id}`);
-      const ratio = contrast(value, variant.background);
-      assert.ok(
-        ratio >= target - 1e-9,
-        `${id} ${value} has contrast ${ratio.toFixed(2)}:1 against ${variant.background}, target ${target}`,
-      );
-      checked += 1;
+  test(`gate2: ${variant.file} text roles meet their targets`, () => {
+    const theme = loadTheme(variant);
+    const textRules = workbenchRules.filter((r) => r.class === 'text');
+    const bad = [];
+    for (const rule of textRules) {
+      const value = theme.colors[rule.id];
+      const bg = textBackground(rule, theme, variant);
+      if (!value) {
+        bad.push(`${rule.id} missing`);
+        continue;
+      }
+      const target = rule.target ?? 4.5;
+      const ratio = contrast(value, bg);
+      if (ratio < target - 1e-9) {
+        bad.push(`${rule.id} ${ratio.toFixed(2)}<${target} against ${bg}`);
+      }
     }
-    assert.ok(checked > 0, 'expected at least one targeted color');
+    assert.deepEqual(bad, []);
+  });
+
+  test(`gate2: ${variant.file} surfaces are quiet (1.0-2.0) with readable fg`, () => {
+    const theme = loadTheme(variant);
+    const fg = theme.colors['editor.foreground'];
+    const bad = [];
+    for (const rule of workbenchRules.filter((r) => r.class === 'surface')) {
+      const value = theme.colors[rule.id];
+      const ratio = contrast(value, variant.background);
+      // The bug this gate fixes: surfaces must NOT be loud. A surface
+      // above 3.0:1 against its background fails outright.
+      if (ratio > 3.0 - 1e-9) {
+        bad.push(`${rule.id} ${ratio.toFixed(2)}>3.0 (too loud)`);
+        continue;
+      }
+      if (ratio < 1.0 || ratio > 2.0) {
+        bad.push(`${rule.id} ${ratio.toFixed(2)} outside 1.0-2.0`);
+      }
+      // editor.foreground on the surface must stay readable.
+      const fgRatio = contrast(fg, value);
+      if (fgRatio < 4.5 - 1e-9) {
+        bad.push(`${rule.id} fg ${fgRatio.toFixed(2)}<4.5 on surface`);
+      }
+    }
+    assert.deepEqual(bad, []);
+  });
+
+  test(`gate2: ${variant.file} lines are quiet (1.0-3.0)`, () => {
+    const theme = loadTheme(variant);
+    const bad = [];
+    for (const rule of workbenchRules.filter((r) => r.class === 'line')) {
+      const value = theme.colors[rule.id];
+      const ratio = contrast(value, variant.background);
+      if (ratio > 3.0 - 1e-9) {
+        bad.push(`${rule.id} ${ratio.toFixed(2)}>3.0 (too loud)`);
+        continue;
+      }
+      if (ratio < 1.0 || ratio > 3.0) {
+        bad.push(`${rule.id} ${ratio.toFixed(2)} outside 1.0-3.0`);
+      }
+    }
+    assert.deepEqual(bad, []);
+  });
+
+  test(`gate2: ${variant.file} no surface or line exceeds 3.0:1 (the bug)`, () => {
+    const theme = loadTheme(variant);
+    const offenders = [];
+    for (const rule of workbenchRules) {
+      if (rule.class !== 'surface' && rule.class !== 'line' && rule.class !== 'chrome') continue;
+      const value = theme.colors[rule.id];
+      const ratio = contrast(value, variant.background);
+      if (ratio > 3.0 - 1e-9) {
+        offenders.push(`${rule.id} (${rule.class}) ${ratio.toFixed(2)}:1`);
+      }
+    }
+    assert.deepEqual(offenders, []);
+  });
+
+  test(`gate2: ${variant.file} areas use the variant background`, () => {
+    const theme = loadTheme(variant);
+    const bad = [];
+    for (const rule of workbenchRules.filter((r) => r.class === 'area')) {
+      if (theme.colors[rule.id] !== variant.background) {
+        bad.push(`${rule.id} ${theme.colors[rule.id]} != ${variant.background}`);
+      }
+    }
+    assert.deepEqual(bad, []);
+  });
+
+  test(`gate2: ${variant.file} large areas and editor share the background`, () => {
+    const theme = loadTheme(variant);
+    // The editor and every large area (sideBar, panel, terminal,
+    // inactive tab, widgets) use the variant background; activityBar,
+    // titleBar and statusBar are chrome (mix with black).
+    for (const id of ['editor.background', 'sideBar.background', 'panel.background', 'terminal.background', 'tab.inactiveBackground', 'editorWidget.background', 'input.background', 'dropdown.background']) {
+      assert.equal(theme.colors[id], variant.background, `${id} should be the variant background`);
+    }
+    if (variant.key === 'alt') {
+      // Chrome on alt is mix(#211816, #000000, 0.25) = #191211.
+      for (const id of ['activityBar.background', 'titleBar.activeBackground', 'statusBar.background']) {
+        assert.equal(theme.colors[id], '#191211', `${id} should be the chrome mix on alt`);
+      }
+    }
+  });
+
+  test(`gate2: ${variant.file} required keys exist`, () => {
+    const theme = loadTheme(variant);
+    for (const id of [
+      'editorCursor.foreground',
+      'editorBracketMatch.background',
+      'editorBracketMatch.border',
+      'editorGroup.border',
+      'editorGroupHeader.tabsBackground',
+      'tab.activeBorderTop',
+      'focusBorder',
+      'editorLink.activeForeground',
+      'textLink.foreground',
+    ]) {
+      assert.ok(theme.colors[id], `missing required key ${id}`);
+    }
+    assert.equal(theme.colors['editorCursor.foreground'], '#f8f7f2');
+    assert.equal(theme.colors['tab.activeBorderTop'], '#fc302e');
   });
 }
 
-// The architecture's documented facts must hold: comment, diag_green,
-// alt and visual are lifted so they are readable on both backgrounds.
-test('gate2: lifted roles meet their targets on both backgrounds', () => {
+// Selection and find surfaces: the selected text keeps 4.5 against
+// the surface, on both variants.
+test('gate2: selected text keeps 4.5 on selection and find surfaces', () => {
   for (const variant of VARIANTS) {
-    const theme = JSON.parse(readFileSync(join(root, variant.file), 'utf8'));
-    // editorLineNumber uses comment grey with a 3.0 target.
-    const lineNumber = theme.colors['editorLineNumber.foreground'];
-    assert.ok(contrast(lineNumber, variant.background) >= 3.0, `editorLineNumber on ${variant.background}`);
-    // Selection foreground must keep 4.5 against the selection surface.
-    const selectionFg = theme.colors['editor.selectionForeground'];
-    const selectionBg = theme.colors['editor.selectionBackground'];
-    assert.ok(contrast(selectionFg, selectionBg) >= 4.5, `selection text on ${variant.background}`);
-    // Error / warning / info foregrounds must keep 4.5.
-    for (const id of ['editorError.foreground', 'editorWarning.foreground', 'editorInfo.foreground']) {
-      assert.ok(contrast(theme.colors[id], variant.background) >= 4.5, `${id} on ${variant.background}`);
+    const theme = loadTheme(variant);
+    const pairs = [
+      ['editor.selectionForeground', 'editor.selectionBackground'],
+      ['editor.findMatchForeground', 'editor.findMatchBackground'],
+      ['editor.findMatchHighlightForeground', 'editor.findMatchHighlightBackground'],
+      ['list.activeSelectionForeground', 'list.activeSelectionBackground'],
+      ['list.inactiveSelectionForeground', 'list.inactiveSelectionBackground'],
+      ['menu.selectionForeground', 'menu.selectionBackground'],
+      ['button.foreground', 'button.background'],
+    ];
+    for (const [fgId, bgId] of pairs) {
+      const ratio = contrast(theme.colors[fgId], theme.colors[bgId]);
+      assert.ok(
+        ratio >= 4.5 - 1e-9,
+        `${fgId} on ${bgId} is ${ratio.toFixed(2)}:1 against ${variant.background}`,
+      );
+    }
+  }
+});
+
+// Diagnostics and git foregrounds keep 4.5 on both variants.
+test('gate2: diagnostics and git foregrounds keep 4.5', () => {
+  for (const variant of VARIANTS) {
+    const theme = loadTheme(variant);
+    for (const id of [
+      'editorError.foreground',
+      'editorWarning.foreground',
+      'editorInfo.foreground',
+      'problemsErrorIcon.foreground',
+      'problemsWarningIcon.foreground',
+      'problemsInfoIcon.foreground',
+      'gitDecoration.addedResourceForeground',
+      'gitDecoration.modifiedResourceForeground',
+      'gitDecoration.deletedResourceForeground',
+    ]) {
+      const ratio = contrast(theme.colors[id], variant.background);
+      assert.ok(ratio >= 4.5 - 1e-9, `${id} is ${ratio.toFixed(2)}:1 on ${variant.background}`);
     }
   }
 });

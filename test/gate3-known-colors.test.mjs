@@ -36,7 +36,11 @@ test('gate3: no workbench id appears twice', () => {
 test('gate3: every workbench palette key exists in the palette', () => {
   const palette = JSON.parse(readFileSync(join(root, 'src/palette.json'), 'utf8'));
   const valid = new Set([...Object.keys(palette.core), ...Object.keys(palette.functional_additions)]);
+  // Only text and accent rules reference a palette key; surface,
+  // line, chrome and area rules are derived from the variant
+  // background (and the mix foreground) instead.
   const unknown = [...workbenchRules, ...terminalAnsiRules]
+    .filter((r) => r.paletteKey !== undefined)
     .map((r) => r.paletteKey)
     .filter((k) => !valid.has(k));
   assert.deepEqual(unknown, []);

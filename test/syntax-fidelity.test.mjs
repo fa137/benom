@@ -78,12 +78,16 @@ test('fidelity: token kinds sharing a hue are separated by font style', () => {
 });
 
 test('fidelity: workbench uses the functional palette only for diagnostics, diff and git', () => {
+  // Diagnostics, diff, git and the merge overview markers. The
+  // terminal ANSI colors are the Venom colormap (a separate
+  // requirement) and are exempt: they reproduce Venom's 16 colors
+  // as-is, including its red.
   const allowed =
-    /^(editorError|editorWarning|editorInfo|problems(Error|Warning|Info)Icon|list\.(error|warning)Foreground|notifications(Error|Warning|Info)Icon|gitDecoration\.(added|modified|deleted|untracked|conflicting|submodule)ResourceForeground|diffEditor|diffEditorGutter|diffEditorOverview|peekView\.border)/;
-  for (const rule of [...workbenchRules, ...terminalAnsiRules]) {
+    /^(editorError|editorWarning|editorInfo|errorForeground|problems(Error|Warning|Info)Icon|list\.(error|warning)Foreground|notifications(Error|Warning|Info)Icon|gitDecoration\.(added|modified|deleted|untracked|conflicting|submodule)ResourceForeground|diffEditor|diffEditorGutter|diffEditorOverview|editorOverviewRuler\.(current|incoming|common)ContentForeground)/;
+  for (const rule of workbenchRules) {
     if (FUNCTIONAL.has(rule.paletteKey)) {
       assert.ok(
-        allowed.test(rule.id) || rule.id.startsWith('diffEditor') || rule.id.startsWith('diffEditorGutter') || rule.id.startsWith('diffEditorOverview'),
+        allowed.test(rule.id),
         `${rule.id} uses functional color ${rule.paletteKey} outside diagnostics/diff/git`,
       );
     }

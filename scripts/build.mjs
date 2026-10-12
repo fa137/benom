@@ -15,7 +15,7 @@ import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tokenRules, semanticTokenRules } from '../src/tokens.mjs';
-import { workbenchRules, terminalAnsiRules } from '../src/workbench.mjs';
+import { workbenchRules, terminalAnsiRules, MIX_FOREGROUND, CHROME_T } from '../src/workbench.mjs';
 
 const root = process.env.BENOM_ROOT
   ? resolve(process.env.BENOM_ROOT)
@@ -135,114 +135,115 @@ const VARIANTS = [
 // Contrast targets (docs/ARCHITECTURE.md). Roles not listed here use the
 // default of 4.5 unless a rule sets `target`.
 const DEFAULT_TARGET = 4.5;
+const COMMENT_TARGET = 4.0;
 
 function loadJson(rel) {
   return JSON.parse(readFileSync(join(root, rel), 'utf8'));
 }
 
+/** Palette value for a key (core or functional_additions). */
+function paletteValue(paletteKey, palette) {
+  if (paletteKey in palette.core) return palette.core[paletteKey];
+  if (paletteKey in palette.functional_additions) return palette.functional_additions[paletteKey];
+  throw new Error(`unknown palette key: ${paletteKey}`);
+}
+
 /**
- * Resolve a palette key to a color for a variant, applying the lift pass.
- * `against` is the hex color the contrast is measured against (the variant
- * background by default). Returns { hex, lifted, before } where `before` is
- * the original palette value.
+ * Resolve a text color for a variant, applying the lift pass.
+ * `against` is the hex color the contrast is measured against (the
+ * variant background by default). Returns { hex, lifted, before }.
  */
-function resolveColor(paletteKey, variant, palette, liftCache, target, against) {
+function resolveTextColor(paletteKey, variant, palette, liftCache, target, against) {
   const bg = against ?? variant.background;
-  const cacheKey = `${paletteKey}:${variant.key}:${target}:${bg}`;
+  const cacheKey = `text:${paletteKey}:${variant.key}:${target}:${bg}`;
   if (liftCache.has(cacheKey)) return liftCache.get(cacheKey);
-  let hex;
-  if (paletteKey in palette.core) hex = palette.core[paletteKey];
-  else if (paletteKey in palette.functional_additions) hex = palette.functional_additions[paletteKey];
-  else throw new Error(`unknown palette key: ${paletteKey}`);
+  const hex = paletteValue(paletteKey, palette);
   const before = hex;
-  // The editor background itself is never lifted.
-  if (paletteKey === 'bg' || paletteKey === 'alt_bg') {
-    const result = { hex, lifted: false, before };
-    liftCache.set(cacheKey, result);
-    return result;
-  }
   const lighterShades = palette.lighter_shades?.[paletteKey];
   const result = { ...liftColor(hex, bg, target, lighterShades), before };
   liftCache.set(cacheKey, result);
   return result;
 }
 
-function buildVariant(variant, palette, liftedLog) {
+/** Mix two hex colors in sRGB: mix(a, b, t) = a*(1-t) + b*t. */
+export function mix(a, b, t) {
+  const pa = parseHex(a), pb = parseHex(b);
+  return toHex(pa.map((v, i) => v * (1 - t) + pb[i] * t));
+}
+
+/**
+ * Build one variant. Every workbench key has a CLASS:
+ * - text:    lifted by contrast (target vs the surface it sits on).
+ * - surface: mix(variantBackground, foreground, t) — never lifted.
+ * - line:    mix(variantBackground, foreground, t) — never lifted.
+ * - chrome:  mix(variantBackground, #000000, 0.25).
+ * - area:    the variant background itself.
+ * - accent:  the palette color, used as-is (fidelity).
+ *
+ * Returns { colors, tokenColors, semanticTokenColors, surfaceLog } where
+ * surfaceLog lists the derived surface/line roles with their t and ratios.
+ */
+function buildVariant(variant, palette, textLiftLog, surfaceLog) {
   const liftCache = new Map();
   const colors = {};
-  const usedKeys = new Set();
+
+  // The mix foreground is the Venom fg, used to derive surfaces/lines.
+  const mixFg = palette.core[MIX_FOREGROUND];
 
   // Pass 1: every role whose contrast is measured against the variant
-  // background (the default). Surface roles (selection, find highlights)
-  // are lifted here so the highlight is visible on the editor background.
+  // background (the default), plus all non-text classes.
   for (const rule of workbenchRules) {
     if (rule.id in colors) {
       throw new Error(`duplicate workbench id: ${rule.id}`);
     }
     if (rule.against) continue; // resolved in pass 2
-    const target = rule.target ?? DEFAULT_TARGET;
-    const resolved = resolveColor(rule.paletteKey, variant, palette, liftCache, target);
-    colors[rule.id] = resolved.hex;
-    usedKeys.add(rule.paletteKey);
-    if (resolved.lifted) {
-      liftedLog.add(rule.id, resolved.before, resolved.hex, contrast(resolved.hex, variant.background), variant.key);
-    }
+    colors[rule.id] = deriveColor(rule, variant, palette, liftCache, mixFg, textLiftLog, surfaceLog);
   }
 
-  // Pass 2: roles whose contrast is measured against another color (for
-  // example the selected text against the selection surface). The target
-  // color is resolved first, then this role is lifted against it.
+  // Pass 2: text roles measured against another color (for example
+  // the selected text against the selection surface).
   for (const rule of workbenchRules) {
     if (!rule.against) continue;
     const surface = colors[rule.against];
     if (!surface) {
       throw new Error(`${rule.id} references unknown surface ${rule.against}`);
     }
-    const target = rule.target ?? DEFAULT_TARGET;
-    const resolved = resolveColor(rule.paletteKey, variant, palette, liftCache, target, surface);
-    colors[rule.id] = resolved.hex;
-    usedKeys.add(rule.paletteKey);
-    if (resolved.lifted) {
-      liftedLog.add(rule.id, resolved.before, resolved.hex, contrast(resolved.hex, surface), variant.key);
-    }
+    colors[rule.id] = deriveColor(rule, variant, palette, liftCache, mixFg, textLiftLog, surfaceLog, surface);
   }
 
-  // Terminal ANSI colors from Venom's colormap.
+  // Terminal ANSI colors from Venom's colormap (accents, as-is).
   for (const rule of terminalAnsiRules) {
     if (rule.id in colors) {
       throw new Error(`duplicate terminal id: ${rule.id}`);
     }
-    const resolved = resolveColor(rule.paletteKey, variant, palette, liftCache, DEFAULT_TARGET);
-    colors[rule.id] = resolved.hex;
-    usedKeys.add(rule.paletteKey);
-    if (resolved.lifted) {
-      liftedLog.add(rule.id, resolved.before, resolved.hex, contrast(resolved.hex, variant.background), variant.key);
-    }
+    colors[rule.id] = paletteValue(rule.paletteKey, palette);
   }
 
   // Force the variant's editor background to the documented value.
   colors['editor.background'] = variant.background;
 
-  // Token colors (TextMate).
+  // Token colors (TextMate): lifted by contrast against the variant
+  // background (comments to 4.0, everything else to 4.5).
   const tokenColors = [];
   for (const rule of tokenRules) {
-    const resolved = resolveColor(rule.paletteKey, variant, palette, liftCache, DEFAULT_TARGET);
+    const target = rule.paletteKey === 'comment' ? COMMENT_TARGET : DEFAULT_TARGET;
+    const resolved = resolveTextColor(rule.paletteKey, variant, palette, liftCache, target);
     const entry = {
       scope: rule.scopes,
       settings: { foreground: resolved.hex.slice(1).toUpperCase() },
     };
     if (rule.fontStyle) entry.settings.fontStyle = rule.fontStyle;
     tokenColors.push(entry);
-    usedKeys.add(rule.paletteKey);
     if (resolved.lifted) {
-      liftedLog.add(rule.role, resolved.before, resolved.hex, contrast(resolved.hex, variant.background), variant.key);
+      textLiftLog.add(rule.role, resolved.before, resolved.hex, contrast(resolved.hex, variant.background), variant.key);
     }
   }
 
   // Semantic token colors.
   const semanticTokenColors = [];
   for (const rule of semanticTokenRules) {
-    const resolved = resolveColor(rule.paletteKey, variant, palette, liftCache, DEFAULT_TARGET);
+    const target = rule.paletteKey === 'comment' ? COMMENT_TARGET : DEFAULT_TARGET;
+    const resolved = resolveTextColor(rule.paletteKey, variant, palette, liftCache, target);
     semanticTokenColors.push({
       name: rule.type,
       scope: rule.type,
@@ -251,16 +252,51 @@ function buildVariant(variant, palette, liftedLog) {
         ...(rule.fontStyle ? { fontStyle: rule.fontStyle } : {}),
       },
     });
-    usedKeys.add(rule.paletteKey);
     if (resolved.lifted) {
-      liftedLog.add(`semantic:${rule.type}`, resolved.before, resolved.hex, contrast(resolved.hex, variant.background), variant.key);
+      textLiftLog.add(`semantic:${rule.type}`, resolved.before, resolved.hex, contrast(resolved.hex, variant.background), variant.key);
     }
   }
 
-  return { colors, tokenColors, semanticTokenColors, usedKeys };
+  return { colors, tokenColors, semanticTokenColors };
 }
 
-/** Ordered log of lifted colors, deduplicated per (name, color, variant). */
+/** Derive the color for a single workbench rule of any class. */
+function deriveColor(rule, variant, palette, liftCache, mixFg, textLiftLog, surfaceLog, againstSurface) {
+  switch (rule.class) {
+    case 'text': {
+      const target = rule.target ?? DEFAULT_TARGET;
+      const resolved = resolveTextColor(rule.paletteKey, variant, palette, liftCache, target, againstSurface);
+      if (resolved.lifted) {
+        const bg = againstSurface ?? variant.background;
+        textLiftLog.add(rule.id, resolved.before, resolved.hex, contrast(resolved.hex, bg), variant.key);
+      }
+      return resolved.hex;
+    }
+    case 'surface': {
+      const color = mix(variant.background, mixFg, rule.t);
+      surfaceLog.add(rule.id, 'surface', rule.t, variant.key, color, contrast(color, variant.background), contrast(palette.core.fg, color));
+      return color;
+    }
+    case 'line': {
+      const color = mix(variant.background, mixFg, rule.t);
+      surfaceLog.add(rule.id, 'line', rule.t, variant.key, color, contrast(color, variant.background), null);
+      return color;
+    }
+    case 'chrome': {
+      const color = mix(variant.background, '#000000', CHROME_T);
+      surfaceLog.add(rule.id, 'chrome', CHROME_T, variant.key, color, contrast(color, variant.background), null);
+      return color;
+    }
+    case 'area':
+      return variant.background;
+    case 'accent':
+      return paletteValue(rule.paletteKey, palette);
+    default:
+      throw new Error(`unknown class ${rule.class} for ${rule.id}`);
+  }
+}
+
+/** Ordered log of lifted text colors, deduplicated per (name, color, variant). */
 class LiftLog {
   constructor() {
     this.entries = [];
@@ -274,8 +310,22 @@ class LiftLog {
   }
 }
 
-function generateTheme(variant, palette, liftedLog) {
-  const { colors, tokenColors, semanticTokenColors } = buildVariant(variant, palette, liftedLog);
+/** Ordered log of derived surface/line/chrome roles. */
+class SurfaceLog {
+  constructor() {
+    this.entries = [];
+    this.seen = new Set();
+  }
+  add(id, kind, t, variant, color, ratio, fgRatio) {
+    const key = `${id}|${variant}`;
+    if (this.seen.has(key)) return;
+    this.seen.add(key);
+    this.entries.push({ id, kind, t, variant, color, ratio, fgRatio });
+  }
+}
+
+function generateTheme(variant, palette, textLiftLog, surfaceLog) {
+  const { colors, tokenColors, semanticTokenColors } = buildVariant(variant, palette, textLiftLog, surfaceLog);
   return {
     name: variant.name,
     type: 'dark',
@@ -295,27 +345,42 @@ function writeJson(rel, obj) {
 const GEN_START = '<!-- benom:generated:start -->';
 const GEN_END = '<!-- benom:generated:end -->';
 
-function renderDecisionsSection(liftedLog) {
+function renderDecisionsSection(textLiftLog, surfaceLog) {
   const lines = [];
   lines.push(GEN_START);
   lines.push('');
-  lines.push('## Generated: lifted colors');
+  lines.push('## Generated: lifted text colors');
   lines.push('');
   lines.push('This section is generated by `npm run build`. Do not edit by hand.');
   lines.push('Every color below was below its contrast target against the variant');
-  lines.push('background and was lifted to the nearest lighter shade of the same hue.');
+  lines.push('background (or the surface it sits on) and was lifted to the nearest');
+  lines.push('lighter shade of the same hue.');
   lines.push('');
   lines.push('| Role | Variant | Before | After | Contrast ratio |');
   lines.push('|---|---|---|---|---|');
-  for (const e of liftedLog.entries) {
+  for (const e of textLiftLog.entries) {
     lines.push(`| ${e.name} | ${e.variant} | ${e.before} | ${e.after} | ${e.ratio.toFixed(2)}:1 |`);
+  }
+  lines.push('');
+  lines.push('## Generated: derived surfaces, lines and chrome');
+  lines.push('');
+  lines.push('Surfaces, lines and chrome are NOT lifted by text contrast. They are');
+  lines.push('derived as mix(variantBackground, foreground, t) (chrome mixes with');
+  lines.push('#000000). `t` is the mix factor; the ratio is against the variant');
+  lines.push('background, and "fg on color" is editor.foreground on that color.');
+  lines.push('');
+  lines.push('| Role | Class | Variant | t | Color | vs background | fg on color |');
+  lines.push('|---|---|---|---|---|---|---|');
+  for (const e of surfaceLog.entries) {
+    const fg = e.fgRatio === null ? '' : `${e.fgRatio.toFixed(2)}:1`;
+    lines.push(`| ${e.id} | ${e.kind} | ${e.variant} | ${e.t.toFixed(2)} | ${e.color} | ${e.ratio.toFixed(2)}:1 | ${fg} |`);
   }
   lines.push('');
   lines.push(GEN_END);
   return lines.join('\n') + '\n';
 }
 
-export function updateDecisions(liftedLog) {
+export function updateDecisions(textLiftLog, surfaceLog) {
   const path = join(root, 'DECISIONS.md');
   let text = '';
   try {
@@ -323,7 +388,7 @@ export function updateDecisions(liftedLog) {
   } catch {
     text = '';
   }
-  const generated = renderDecisionsSection(liftedLog);
+  const generated = renderDecisionsSection(textLiftLog, surfaceLog);
   if (!text.includes(GEN_START) || !text.includes(GEN_END)) {
     const base = text.endsWith('\n') ? text : text + '\n';
     const handAuthored = base.trim() ? base + '\n' : '';
@@ -339,19 +404,19 @@ export function updateDecisions(liftedLog) {
 function main() {
   const palette = loadJson('src/palette.json');
 
-  const liftedLog = new LiftLog();
+  const textLiftLog = new LiftLog();
+  const surfaceLog = new SurfaceLog();
   const themes = {};
   for (const variant of VARIANTS) {
-    themes[variant.key] = generateTheme(variant, palette, liftedLog);
+    themes[variant.key] = generateTheme(variant, palette, textLiftLog, surfaceLog);
   }
 
   writeJson('themes/benom-color-theme.json', themes.base);
   writeJson('themes/benom-alt-color-theme.json', themes.alt);
-  updateDecisions(liftedLog);
+  updateDecisions(textLiftLog, surfaceLog);
 
-  const liftedCount = liftedLog.entries.length;
   process.stdout.write(
-    `benom build: wrote themes/benom-color-theme.json, themes/benom-alt-color-theme.json (${liftedCount} lifted color${liftedCount === 1 ? '' : 's'})\n`,
+    `benom build: wrote themes/benom-color-theme.json, themes/benom-alt-color-theme.json (${textLiftLog.entries.length} text lifts, ${surfaceLog.entries.length} derived surfaces/lines/chrome)\n`,
   );
 }
 

@@ -1,253 +1,343 @@
-// Benom: UI color keys (role -> VS Code workbench color ids).
+// Benom: UI color keys, each with a CLASS that says how its color is
+// derived. Pure data module consumed by scripts/build.mjs.
 //
-// Pure data module consumed by scripts/build.mjs. Each entry maps a semantic role
-// to the VS Code workbench color id it controls and to a palette key (core or
-// functional_additions) that supplies the base color.
+// Classes (per the coordinator's design, round 1):
+// - text    foreground colors. Lifted by contrast against the surface
+//           they sit on (`against`) or the variant background. Targets:
+//           4.5 default, 4.0 comments, 3.0 secondary/inactive text.
+// - surface hover, selection, line highlight, word highlight, find
+//           match, widget and section header backgrounds, list
+//           selection/hover/focus, scrollbar sliders, button surfaces,
+//           peek and merge backgrounds. NEVER lifted by text contrast.
+//           Derived as mix(variantBackground, foreground, t).
+// - line    borders, indent guides, rulers, whitespace dots, tree indent
+//           stroke. Derived as mix(variantBackground, foreground, t).
+// - chrome  activity bar, title bar, status bar. Derived as
+//           mix(variantBackground, #000000, 0.25) (base stays black).
+// - area    large areas (editor, sidebar, panel, terminal, inactive
+//           tab, widgets, active tab, breadcrumbs). The variant
+//           background itself.
+// - accent  colored accents (red/teal borders, badges, diff markers,
+//           terminal ANSI). The palette color, used as-is for fidelity.
 //
-// Gate 3 (docs/ARCHITECTURE.md): every id in `id` must be a real VS Code color
-// id, checked against the committed allowlist in test/known-colors.json. No key
-// may appear twice (asserted by the build and by the gate 3 test).
-//
-// Only the functional_additions palette (error, warning, info, added, modified,
-// removed) may supply diagnostic / diff / git colors; every other role uses a
-// core Venom color.
+// Gate 3 (docs/ARCHITECTURE.md): every `id` must be a real VS Code
+// color id, checked against the committed allowlist in
+// test/known-colors.json. No key may appear twice.
+
+// Surface mix factors (t) per role.
+export const SURFACE_T = {
+  lineHighlight: 0.05,
+  listHover: 0.07,
+  wordHighlight: 0.10,
+  inactiveSelection: 0.10,
+  selection: 0.16,
+  listActiveSelection: 0.14,
+  findMatchHighlight: 0.12,
+  findMatch: 0.22,
+  scrollbarSlider: 0.12,
+  scrollbarHover: 0.18,
+  scrollbarActive: 0.26,
+  sectionHeader: 0.06,
+  button: 0.14,
+  peekMerge: 0.07,
+  mergeHeader: 0.10,
+};
+
+// Line mix factors (t) per role.
+export const LINE_T = {
+  border: 0.12,
+  indentGuide: 0.08,
+  activeIndentGuide: 0.25,
+  ruler: 0.10,
+  whitespace: 0.18,
+  treeIndent: 0.10,
+};
+
+// Chrome mix factor (activity bar, title bar, status bar).
+export const CHROME_T = 0.25;
+
+// The foreground used to derive surfaces and lines (Venom fg).
+export const MIX_FOREGROUND = 'fg';
 
 export const workbenchRules = [
-  // Editor core. editor.background and editor.foreground are overridden per
-  // variant by the build (base #000000, alt #211816).
-  { role: 'editor.background', id: 'editor.background', paletteKey: 'bg' },
-  { role: 'editor.foreground', id: 'editor.foreground', paletteKey: 'fg' },
-  { role: 'editorLineNumber.foreground', id: 'editorLineNumber.foreground', paletteKey: 'comment', target: 3.0 },
-  { role: 'editorLineNumber.activeForeground', id: 'editorLineNumber.activeForeground', paletteKey: 'fg', target: 3.0 },
-  { role: 'editorCursor.foreground', id: 'editorCursor.foreground', paletteKey: 'string' },
-  { role: 'editorGutter.background', id: 'editorGutter.background', paletteKey: 'bg' },
-  { role: 'editor.lineHighlightBackground', id: 'editor.lineHighlightBackground', paletteKey: 'visual' },
-  { role: 'editor.lineHighlightBorder', id: 'editor.lineHighlightBorder', paletteKey: 'visual' },
-  { role: 'editorRuler.foreground', id: 'editorRuler.foreground', paletteKey: 'comment' },
-  { role: 'editorOverviewRuler.border', id: 'editorOverviewRuler.border', paletteKey: 'comment' },
+  // --- Editor core ---
+  { role: 'editor.background', id: 'editor.background', class: 'area' },
+  { role: 'editor.foreground', id: 'editor.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'editor.border', id: 'editor.border', class: 'line', t: LINE_T.border },
+  { role: 'editorLineNumber.foreground', id: 'editorLineNumber.foreground', class: 'text', paletteKey: 'comment', target: 3.0 },
+  { role: 'editorLineNumber.activeForeground', id: 'editorLineNumber.activeForeground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'editorCursor.foreground', id: 'editorCursor.foreground', class: 'text', paletteKey: 'string', target: 4.5 },
+  { role: 'editorGutter.background', id: 'editorGutter.background', class: 'area' },
+  { role: 'editor.lineHighlightBackground', id: 'editor.lineHighlightBackground', class: 'surface', t: SURFACE_T.lineHighlight },
+  { role: 'editor.lineHighlightBorder', id: 'editor.lineHighlightBorder', class: 'line', t: LINE_T.border },
+  { role: 'editorRuler.foreground', id: 'editorRuler.foreground', class: 'line', t: LINE_T.ruler },
+  { role: 'editorOverviewRuler.border', id: 'editorOverviewRuler.border', class: 'line', t: LINE_T.border },
 
-  // Selection and find highlights. The selected text must keep 4.5:1
-  // against the selection surface, so these foreground roles are
-  // lifted against their surface (see `against`), and the surface
-  // itself is lifted against the editor background.
-  { role: 'editor.selectionBackground', id: 'editor.selectionBackground', paletteKey: 'visual', surface: true, target: 3.0 },
-  { role: 'editor.inactiveSelectionBackground', id: 'editor.inactiveSelectionBackground', paletteKey: 'visual', surface: true, target: 3.0 },
-  { role: 'editor.selectionForeground', id: 'editor.selectionForeground', paletteKey: 'fg', target: 4.5, against: 'editor.selectionBackground' },
-  { role: 'editor.findMatchBackground', id: 'editor.findMatchBackground', paletteKey: 'visual', surface: true, target: 3.0 },
-  { role: 'editor.findMatchHighlightBackground', id: 'editor.findMatchHighlightBackground', paletteKey: 'visual', surface: true, target: 3.0 },
-  { role: 'editor.findMatchForeground', id: 'editor.findMatchForeground', paletteKey: 'fg', target: 4.5, against: 'editor.findMatchBackground' },
-  { role: 'editor.findMatchHighlightForeground', id: 'editor.findMatchHighlightForeground', paletteKey: 'fg', target: 4.5, against: 'editor.findMatchHighlightBackground' },
-  { role: 'editor.wordHighlightBackground', id: 'editor.wordHighlightBackground', paletteKey: 'visual' },
-  { role: 'editor.wordHighlightStrongBackground', id: 'editor.wordHighlightStrongBackground', paletteKey: 'visual' },
-  { role: 'editorWhitespace.foreground', id: 'editorWhitespace.foreground', paletteKey: 'comment' },
+  // Editor groups.
+  { role: 'editorGroup.border', id: 'editorGroup.border', class: 'line', t: LINE_T.border },
+  { role: 'editorGroupHeader.tabsBackground', id: 'editorGroupHeader.tabsBackground', class: 'area' },
+  { role: 'editorGroupHeader.noTabsBackground', id: 'editorGroupHeader.noTabsBackground', class: 'area' },
+  { role: 'editorGroupHeader.tabsBorder', id: 'editorGroupHeader.tabsBorder', class: 'line', t: LINE_T.border },
+  { role: 'editorGroupHeader.border', id: 'editorGroupHeader.border', class: 'line', t: LINE_T.border },
+  { role: 'editorGroup.emptyBackground', id: 'editorGroup.emptyBackground', class: 'area' },
 
-  // Bracket pair colors and indent guides. Bracket pair colors cycle through the
-  // available core hues; indent guides use the comment grey.
-  { role: 'editorBracketHighlight.foreground1', id: 'editorBracketHighlight.foreground1', paletteKey: 'fg' },
-  { role: 'editorBracketHighlight.foreground2', id: 'editorBracketHighlight.foreground2', paletteKey: 'property' },
-  { role: 'editorBracketHighlight.foreground3', id: 'editorBracketHighlight.foreground3', paletteKey: 'alt' },
-  { role: 'editorBracketHighlight.foreground4', id: 'editorBracketHighlight.foreground4', paletteKey: 'keyword' },
-  { role: 'editorBracketHighlight.foreground5', id: 'editorBracketHighlight.foreground5', paletteKey: 'constant' },
-  { role: 'editorBracketHighlight.foreground6', id: 'editorBracketHighlight.foreground6', paletteKey: 'func' },
-  { role: 'editorIndentGuide.background', id: 'editorIndentGuide.background', paletteKey: 'visual' },
-  { role: 'editorIndentGuide.activeBackground', id: 'editorIndentGuide.activeBackground', paletteKey: 'comment' },
+  // Bracket matching and bracket pair colors.
+  { role: 'editorBracketMatch.background', id: 'editorBracketMatch.background', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'editorBracketMatch.border', id: 'editorBracketMatch.border', class: 'line', t: LINE_T.border },
+  { role: 'editorBracketHighlight.foreground1', id: 'editorBracketHighlight.foreground1', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'editorBracketHighlight.foreground2', id: 'editorBracketHighlight.foreground2', class: 'text', paletteKey: 'property', target: 4.5 },
+  { role: 'editorBracketHighlight.foreground3', id: 'editorBracketHighlight.foreground3', class: 'text', paletteKey: 'alt', target: 4.5 },
+  { role: 'editorBracketHighlight.foreground4', id: 'editorBracketHighlight.foreground4', class: 'text', paletteKey: 'keyword', target: 4.5 },
+  { role: 'editorBracketHighlight.foreground5', id: 'editorBracketHighlight.foreground5', class: 'text', paletteKey: 'constant', target: 4.5 },
+  { role: 'editorBracketHighlight.foreground6', id: 'editorBracketHighlight.foreground6', class: 'text', paletteKey: 'func', target: 4.5 },
+
+  // Selection and find highlights (surfaces; the selected text is a
+  // text role measured against the surface via `against`).
+  { role: 'editor.selectionBackground', id: 'editor.selectionBackground', class: 'surface', t: SURFACE_T.selection },
+  { role: 'editor.inactiveSelectionBackground', id: 'editor.inactiveSelectionBackground', class: 'surface', t: SURFACE_T.inactiveSelection },
+  { role: 'editor.selectionForeground', id: 'editor.selectionForeground', class: 'text', paletteKey: 'fg', target: 4.5, against: 'editor.selectionBackground' },
+  { role: 'editor.findMatchBackground', id: 'editor.findMatchBackground', class: 'surface', t: SURFACE_T.findMatch },
+  { role: 'editor.findMatchHighlightBackground', id: 'editor.findMatchHighlightBackground', class: 'surface', t: SURFACE_T.findMatchHighlight },
+  { role: 'editor.findMatchForeground', id: 'editor.findMatchForeground', class: 'text', paletteKey: 'fg', target: 4.5, against: 'editor.findMatchBackground' },
+  { role: 'editor.findMatchHighlightForeground', id: 'editor.findMatchHighlightForeground', class: 'text', paletteKey: 'fg', target: 4.5, against: 'editor.findMatchHighlightBackground' },
+  { role: 'editor.wordHighlightBackground', id: 'editor.wordHighlightBackground', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'editor.wordHighlightStrongBackground', id: 'editor.wordHighlightStrongBackground', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'editorWhitespace.foreground', id: 'editorWhitespace.foreground', class: 'line', t: LINE_T.whitespace },
+  { role: 'editorIndentGuide.background', id: 'editorIndentGuide.background', class: 'line', t: LINE_T.indentGuide },
+  { role: 'editorIndentGuide.activeBackground', id: 'editorIndentGuide.activeBackground', class: 'line', t: LINE_T.activeIndentGuide },
+
+  // Editor highlights (subtle surfaces).
+  { role: 'editor.foldBackground', id: 'editor.foldBackground', class: 'surface', t: SURFACE_T.listHover },
+  { role: 'editor.rangeHighlightBackground', id: 'editor.rangeHighlightBackground', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'editor.findRangeHighlightBackground', id: 'editor.findRangeHighlightBackground', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'editor.hoverHighlightBackground', id: 'editor.hoverHighlightBackground', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'editor.linkedEditingBackground', id: 'editor.linkedEditingBackground', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'editor.snippetTabstopHighlightBackground', id: 'editor.snippetTabstopHighlightBackground', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'editor.snippetFinalTabstopHighlightBackground', id: 'editor.snippetFinalTabstopHighlightBackground', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'editorLink.activeForeground', id: 'editorLink.activeForeground', class: 'text', paletteKey: 'string', target: 4.5 },
+  { role: 'textLink.foreground', id: 'textLink.foreground', class: 'text', paletteKey: 'string', target: 4.5 },
 
   // Editor widgets.
-  { role: 'editorWidget.background', id: 'editorWidget.background', paletteKey: 'bg' },
-  { role: 'editorWidget.foreground', id: 'editorWidget.foreground', paletteKey: 'fg' },
-  { role: 'editorWidget.border', id: 'editorWidget.border', paletteKey: 'comment' },
-  { role: 'editorHoverWidget.background', id: 'editorHoverWidget.background', paletteKey: 'bg' },
-  { role: 'editorHoverWidget.foreground', id: 'editorHoverWidget.foreground', paletteKey: 'fg' },
-  { role: 'editorHoverWidget.border', id: 'editorHoverWidget.border', paletteKey: 'comment' },
-  { role: 'editorSuggestWidget.background', id: 'editorSuggestWidget.background', paletteKey: 'bg' },
-  { role: 'editorSuggestWidget.foreground', id: 'editorSuggestWidget.foreground', paletteKey: 'fg' },
-  { role: 'editorSuggestWidget.border', id: 'editorSuggestWidget.border', paletteKey: 'comment' },
-  { role: 'editorSuggestWidget.selectedBackground', id: 'editorSuggestWidget.selectedBackground', paletteKey: 'visual' },
-  { role: 'editorInlayHint.foreground', id: 'editorInlayHint.foreground', paletteKey: 'comment', target: 3.0 },
-  { role: 'editorInlayHint.background', id: 'editorInlayHint.background', paletteKey: 'bg' },
+  { role: 'editorWidget.background', id: 'editorWidget.background', class: 'area' },
+  { role: 'editorWidget.foreground', id: 'editorWidget.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'editorWidget.border', id: 'editorWidget.border', class: 'line', t: LINE_T.border },
+  { role: 'editorHoverWidget.background', id: 'editorHoverWidget.background', class: 'area' },
+  { role: 'editorHoverWidget.foreground', id: 'editorHoverWidget.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'editorHoverWidget.border', id: 'editorHoverWidget.border', class: 'line', t: LINE_T.border },
+  { role: 'editorSuggestWidget.background', id: 'editorSuggestWidget.background', class: 'area' },
+  { role: 'editorSuggestWidget.foreground', id: 'editorSuggestWidget.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'editorSuggestWidget.border', id: 'editorSuggestWidget.border', class: 'line', t: LINE_T.border },
+  { role: 'editorSuggestWidget.selectedBackground', id: 'editorSuggestWidget.selectedBackground', class: 'surface', t: SURFACE_T.listHover },
+  { role: 'editorInlayHint.foreground', id: 'editorInlayHint.foreground', class: 'text', paletteKey: 'comment', target: 3.0 },
+  { role: 'editorInlayHint.background', id: 'editorInlayHint.background', class: 'area' },
 
-  // Diagnostics (functional palette only).
-  { role: 'editorError.foreground', id: 'editorError.foreground', paletteKey: 'error', target: 4.5 },
-  { role: 'editorWarning.foreground', id: 'editorWarning.foreground', paletteKey: 'warning', target: 4.5 },
-  { role: 'editorInfo.foreground', id: 'editorInfo.foreground', paletteKey: 'info', target: 4.5 },
-  { role: 'editorError.background', id: 'editorError.background', paletteKey: 'error' },
-  { role: 'editorWarning.background', id: 'editorWarning.background', paletteKey: 'warning' },
-  { role: 'editorInfo.background', id: 'editorInfo.background', paletteKey: 'info' },
-  { role: 'problemsErrorIcon.foreground', id: 'problemsErrorIcon.foreground', paletteKey: 'error', target: 4.5 },
-  { role: 'problemsWarningIcon.foreground', id: 'problemsWarningIcon.foreground', paletteKey: 'warning', target: 4.5 },
-  { role: 'problemsInfoIcon.foreground', id: 'problemsInfoIcon.foreground', paletteKey: 'info', target: 4.5 },
-  { role: 'list.errorForeground', id: 'list.errorForeground', paletteKey: 'error', target: 4.5 },
-  { role: 'list.warningForeground', id: 'list.warningForeground', paletteKey: 'warning', target: 4.5 },
+  // Diagnostics (functional palette, text class, lifted to 4.5).
+  { role: 'editorError.foreground', id: 'editorError.foreground', class: 'text', paletteKey: 'error', target: 4.5 },
+  { role: 'editorWarning.foreground', id: 'editorWarning.foreground', class: 'text', paletteKey: 'warning', target: 4.5 },
+  { role: 'editorInfo.foreground', id: 'editorInfo.foreground', class: 'text', paletteKey: 'info', target: 4.5 },
+  { role: 'editorError.background', id: 'editorError.background', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'editorWarning.background', id: 'editorWarning.background', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'editorInfo.background', id: 'editorInfo.background', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'problemsErrorIcon.foreground', id: 'problemsErrorIcon.foreground', class: 'text', paletteKey: 'error', target: 4.5 },
+  { role: 'problemsWarningIcon.foreground', id: 'problemsWarningIcon.foreground', class: 'text', paletteKey: 'warning', target: 4.5 },
+  { role: 'problemsInfoIcon.foreground', id: 'problemsInfoIcon.foreground', class: 'text', paletteKey: 'info', target: 4.5 },
+  { role: 'list.errorForeground', id: 'list.errorForeground', class: 'text', paletteKey: 'error', target: 4.5 },
+  { role: 'list.warningForeground', id: 'list.warningForeground', class: 'text', paletteKey: 'warning', target: 4.5 },
 
-  // Sidebar, activity bar, status bar, title bar, panel.
-  { role: 'sideBar.background', id: 'sideBar.background', paletteKey: 'bg' },
-  { role: 'sideBar.foreground', id: 'sideBar.foreground', paletteKey: 'fg' },
-  { role: 'sideBar.border', id: 'sideBar.border', paletteKey: 'comment' },
-  { role: 'sideBarTitle.foreground', id: 'sideBarTitle.foreground', paletteKey: 'fg' },
-  { role: 'sideBarSectionHeader.background', id: 'sideBarSectionHeader.background', paletteKey: 'visual' },
-  { role: 'activityBar.background', id: 'activityBar.background', paletteKey: 'bg' },
-  { role: 'activityBar.foreground', id: 'activityBar.foreground', paletteKey: 'fg' },
-  { role: 'activityBar.inactiveForeground', id: 'activityBar.inactiveForeground', paletteKey: 'comment', target: 3.0 },
-  { role: 'activityBar.activeBorder', id: 'activityBar.activeBorder', paletteKey: 'type' },
-  { role: 'activityBarBadge.background', id: 'activityBarBadge.background', paletteKey: 'type' },
-  { role: 'activityBarBadge.foreground', id: 'activityBarBadge.foreground', paletteKey: 'bg' },
-  { role: 'titleBar.activeBackground', id: 'titleBar.activeBackground', paletteKey: 'bg' },
-  { role: 'titleBar.activeForeground', id: 'titleBar.activeForeground', paletteKey: 'fg' },
-  { role: 'titleBar.inactiveBackground', id: 'titleBar.inactiveBackground', paletteKey: 'bg' },
-  { role: 'titleBar.inactiveForeground', id: 'titleBar.inactiveForeground', paletteKey: 'comment', target: 3.0 },
-  { role: 'statusBar.background', id: 'statusBar.background', paletteKey: 'bg' },
-  { role: 'statusBar.foreground', id: 'statusBar.foreground', paletteKey: 'fg' },
-  { role: 'statusBar.noFolderBackground', id: 'statusBar.noFolderBackground', paletteKey: 'bg' },
-  { role: 'statusBar.noFolderForeground', id: 'statusBar.noFolderForeground', paletteKey: 'comment', target: 3.0 },
-  { role: 'statusBar.debuggingBackground', id: 'statusBar.debuggingBackground', paletteKey: 'bg' },
-  { role: 'statusBarItem.activeBackground', id: 'statusBarItem.activeBackground', paletteKey: 'visual' },
-  { role: 'statusBarItem.hoverBackground', id: 'statusBarItem.hoverBackground', paletteKey: 'visual' },
+  // Sidebar.
+  { role: 'sideBar.background', id: 'sideBar.background', class: 'area' },
+  { role: 'sideBar.foreground', id: 'sideBar.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'sideBar.border', id: 'sideBar.border', class: 'line', t: LINE_T.border },
+  { role: 'sideBarTitle.foreground', id: 'sideBarTitle.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'sideBarSectionHeader.background', id: 'sideBarSectionHeader.background', class: 'surface', t: SURFACE_T.sectionHeader },
+  { role: 'sideBar.dropBackground', id: 'sideBar.dropBackground', class: 'surface', t: SURFACE_T.listHover },
+
+  // Chrome: activity bar, title bar, status bar.
+  { role: 'activityBar.background', id: 'activityBar.background', class: 'chrome' },
+  { role: 'activityBar.foreground', id: 'activityBar.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'activityBar.inactiveForeground', id: 'activityBar.inactiveForeground', class: 'text', paletteKey: 'comment', target: 3.0 },
+  { role: 'activityBar.activeBorder', id: 'activityBar.activeBorder', class: 'accent', paletteKey: 'type' },
+  { role: 'activityBarBadge.background', id: 'activityBarBadge.background', class: 'accent', paletteKey: 'type' },
+  { role: 'activityBarBadge.foreground', id: 'activityBarBadge.foreground', class: 'text', paletteKey: 'bg', target: 4.5, against: 'activityBarBadge.background' },
+  { role: 'titleBar.activeBackground', id: 'titleBar.activeBackground', class: 'chrome' },
+  { role: 'titleBar.activeForeground', id: 'titleBar.activeForeground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'titleBar.inactiveBackground', id: 'titleBar.inactiveBackground', class: 'chrome' },
+  { role: 'titleBar.inactiveForeground', id: 'titleBar.inactiveForeground', class: 'text', paletteKey: 'comment', target: 3.0 },
+  { role: 'statusBar.background', id: 'statusBar.background', class: 'chrome' },
+  { role: 'statusBar.foreground', id: 'statusBar.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'statusBar.noFolderBackground', id: 'statusBar.noFolderBackground', class: 'chrome' },
+  { role: 'statusBar.noFolderForeground', id: 'statusBar.noFolderForeground', class: 'text', paletteKey: 'comment', target: 3.0 },
+  { role: 'statusBar.debuggingBackground', id: 'statusBar.debuggingBackground', class: 'chrome' },
+  { role: 'statusBarItem.activeBackground', id: 'statusBarItem.activeBackground', class: 'surface', t: SURFACE_T.inactiveSelection },
+  { role: 'statusBarItem.hoverBackground', id: 'statusBarItem.hoverBackground', class: 'surface', t: SURFACE_T.listHover },
+  { role: 'statusBarItem.focusBorder', id: 'statusBarItem.focusBorder', class: 'line', t: LINE_T.border },
 
   // Tabs.
-  { role: 'tab.activeBackground', id: 'tab.activeBackground', paletteKey: 'bg' },
-  { role: 'tab.activeForeground', id: 'tab.activeForeground', paletteKey: 'fg' },
-  { role: 'tab.inactiveBackground', id: 'tab.inactiveBackground', paletteKey: 'bg' },
-  { role: 'tab.inactiveForeground', id: 'tab.inactiveForeground', paletteKey: 'comment', target: 3.0 },
-  { role: 'tab.border', id: 'tab.border', paletteKey: 'comment' },
-  { role: 'tab.activeBorder', id: 'tab.activeBorder', paletteKey: 'type' },
-  { role: 'tab.unfocusedActiveBackground', id: 'tab.unfocusedActiveBackground', paletteKey: 'bg' },
-  { role: 'tab.unfocusedActiveForeground', id: 'tab.unfocusedActiveForeground', paletteKey: 'comment', target: 3.0 },
-  { role: 'tab.unfocusedInactiveBackground', id: 'tab.unfocusedInactiveBackground', paletteKey: 'bg' },
-  { role: 'tab.unfocusedInactiveForeground', id: 'tab.unfocusedInactiveForeground', paletteKey: 'comment', target: 3.0 },
+  { role: 'tab.activeBackground', id: 'tab.activeBackground', class: 'area' },
+  { role: 'tab.activeForeground', id: 'tab.activeForeground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'tab.inactiveBackground', id: 'tab.inactiveBackground', class: 'area' },
+  { role: 'tab.inactiveForeground', id: 'tab.inactiveForeground', class: 'text', paletteKey: 'comment', target: 3.0 },
+  { role: 'tab.border', id: 'tab.border', class: 'line', t: LINE_T.border },
+  { role: 'tab.activeBorder', id: 'tab.activeBorder', class: 'line', t: LINE_T.border },
+  { role: 'tab.activeBorderTop', id: 'tab.activeBorderTop', class: 'accent', paletteKey: 'type' },
+  { role: 'tab.unfocusedActiveBackground', id: 'tab.unfocusedActiveBackground', class: 'area' },
+  { role: 'tab.unfocusedActiveForeground', id: 'tab.unfocusedActiveForeground', class: 'text', paletteKey: 'comment', target: 3.0 },
+  { role: 'tab.unfocusedInactiveBackground', id: 'tab.unfocusedInactiveBackground', class: 'area' },
+  { role: 'tab.unfocusedInactiveForeground', id: 'tab.unfocusedInactiveForeground', class: 'text', paletteKey: 'comment', target: 3.0 },
 
   // Panel and terminal.
-  { role: 'panel.background', id: 'panel.background', paletteKey: 'bg' },
-  { role: 'panel.border', id: 'panel.border', paletteKey: 'comment' },
-  { role: 'panelTitle.activeForeground', id: 'panelTitle.activeForeground', paletteKey: 'fg' },
-  { role: 'panelTitle.inactiveForeground', id: 'panelTitle.inactiveForeground', paletteKey: 'comment', target: 3.0 },
-  { role: 'terminal.background', id: 'terminal.background', paletteKey: 'bg' },
-  { role: 'terminal.foreground', id: 'terminal.foreground', paletteKey: 'fg' },
+  { role: 'panel.background', id: 'panel.background', class: 'area' },
+  { role: 'panel.border', id: 'panel.border', class: 'line', t: LINE_T.border },
+  { role: 'panelTitle.activeForeground', id: 'panelTitle.activeForeground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'panelTitle.inactiveForeground', id: 'panelTitle.inactiveForeground', class: 'text', paletteKey: 'comment', target: 3.0 },
+  { role: 'terminal.background', id: 'terminal.background', class: 'area' },
+  { role: 'terminal.foreground', id: 'terminal.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
 
   // Input, dropdown, list, tree.
-  { role: 'input.background', id: 'input.background', paletteKey: 'bg' },
-  { role: 'input.foreground', id: 'input.foreground', paletteKey: 'fg' },
-  { role: 'input.border', id: 'input.border', paletteKey: 'comment' },
-  { role: 'input.placeholderForeground', id: 'input.placeholderForeground', paletteKey: 'comment', target: 3.0 },
-  { role: 'dropdown.background', id: 'dropdown.background', paletteKey: 'bg' },
-  { role: 'dropdown.foreground', id: 'dropdown.foreground', paletteKey: 'fg' },
-  { role: 'dropdown.border', id: 'dropdown.border', paletteKey: 'comment' },
-  { role: 'list.activeSelectionBackground', id: 'list.activeSelectionBackground', paletteKey: 'visual', surface: true, target: 3.0 },
-  { role: 'list.activeSelectionForeground', id: 'list.activeSelectionForeground', paletteKey: 'fg', target: 4.5, against: 'list.activeSelectionBackground' },
-  { role: 'list.inactiveSelectionBackground', id: 'list.inactiveSelectionBackground', paletteKey: 'visual', surface: true, target: 3.0 },
-  { role: 'list.inactiveSelectionForeground', id: 'list.inactiveSelectionForeground', paletteKey: 'fg', target: 4.5, against: 'list.inactiveSelectionBackground' },
-  { role: 'list.hoverBackground', id: 'list.hoverBackground', paletteKey: 'visual' },
-  { role: 'list.hoverForeground', id: 'list.hoverForeground', paletteKey: 'fg' },
-  { role: 'list.focusBackground', id: 'list.focusBackground', paletteKey: 'visual' },
-  { role: 'list.focusForeground', id: 'list.focusForeground', paletteKey: 'fg' },
-  { role: 'list.highlightForeground', id: 'list.highlightForeground', paletteKey: 'string' },
-  { role: 'tree.indentGuidesStroke', id: 'tree.indentGuidesStroke', paletteKey: 'comment' },
+  { role: 'input.background', id: 'input.background', class: 'area' },
+  { role: 'input.foreground', id: 'input.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'input.border', id: 'input.border', class: 'line', t: LINE_T.border },
+  { role: 'input.placeholderForeground', id: 'input.placeholderForeground', class: 'text', paletteKey: 'comment', target: 3.0 },
+  { role: 'dropdown.background', id: 'dropdown.background', class: 'area' },
+  { role: 'dropdown.foreground', id: 'dropdown.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'dropdown.border', id: 'dropdown.border', class: 'line', t: LINE_T.border },
+  { role: 'list.activeSelectionBackground', id: 'list.activeSelectionBackground', class: 'surface', t: SURFACE_T.listActiveSelection },
+  { role: 'list.activeSelectionForeground', id: 'list.activeSelectionForeground', class: 'text', paletteKey: 'fg', target: 4.5, against: 'list.activeSelectionBackground' },
+  { role: 'list.inactiveSelectionBackground', id: 'list.inactiveSelectionBackground', class: 'surface', t: SURFACE_T.inactiveSelection },
+  { role: 'list.inactiveSelectionForeground', id: 'list.inactiveSelectionForeground', class: 'text', paletteKey: 'fg', target: 4.5, against: 'list.inactiveSelectionBackground' },
+  { role: 'list.hoverBackground', id: 'list.hoverBackground', class: 'surface', t: SURFACE_T.listHover },
+  { role: 'list.hoverForeground', id: 'list.hoverForeground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'list.focusBackground', id: 'list.focusBackground', class: 'surface', t: SURFACE_T.listHover },
+  { role: 'list.focusForeground', id: 'list.focusForeground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'list.highlightForeground', id: 'list.highlightForeground', class: 'text', paletteKey: 'string', target: 4.5 },
+  { role: 'list.dropBackground', id: 'list.dropBackground', class: 'surface', t: SURFACE_T.listHover },
+  { role: 'tree.indentGuidesStroke', id: 'tree.indentGuidesStroke', class: 'line', t: LINE_T.treeIndent },
 
   // Buttons, checkbox, radio.
-  { role: 'button.background', id: 'button.background', paletteKey: 'visual' },
-  { role: 'button.foreground', id: 'button.foreground', paletteKey: 'fg', target: 4.5 },
-  { role: 'button.hoverBackground', id: 'button.hoverBackground', paletteKey: 'comment' },
-  { role: 'button.border', id: 'button.border', paletteKey: 'comment' },
-  { role: 'checkbox.background', id: 'checkbox.background', paletteKey: 'bg' },
-  { role: 'checkbox.foreground', id: 'checkbox.foreground', paletteKey: 'fg' },
-  { role: 'checkbox.border', id: 'checkbox.border', paletteKey: 'comment' },
-  { role: 'radio.inactiveBackground', id: 'radio.inactiveBackground', paletteKey: 'bg' },
-  { role: 'radio.inactiveForeground', id: 'radio.inactiveForeground', paletteKey: 'fg' },
-  { role: 'radio.inactiveBorder', id: 'radio.inactiveBorder', paletteKey: 'comment' },
+  { role: 'button.background', id: 'button.background', class: 'surface', t: SURFACE_T.button },
+  { role: 'button.foreground', id: 'button.foreground', class: 'text', paletteKey: 'fg', target: 4.5, against: 'button.background' },
+  { role: 'button.hoverBackground', id: 'button.hoverBackground', class: 'surface', t: SURFACE_T.inactiveSelection },
+  { role: 'button.border', id: 'button.border', class: 'line', t: LINE_T.border },
+  { role: 'checkbox.background', id: 'checkbox.background', class: 'area' },
+  { role: 'checkbox.foreground', id: 'checkbox.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'checkbox.border', id: 'checkbox.border', class: 'line', t: LINE_T.border },
+  { role: 'checkbox.selectBackground', id: 'checkbox.selectBackground', class: 'surface', t: SURFACE_T.listActiveSelection },
+  { role: 'checkbox.selectBorder', id: 'checkbox.selectBorder', class: 'line', t: LINE_T.border },
+  { role: 'radio.inactiveBackground', id: 'radio.inactiveBackground', class: 'area' },
+  { role: 'radio.inactiveForeground', id: 'radio.inactiveForeground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'radio.inactiveBorder', id: 'radio.inactiveBorder', class: 'line', t: LINE_T.border },
+  { role: 'radio.activeBackground', id: 'radio.activeBackground', class: 'surface', t: SURFACE_T.listActiveSelection },
+  { role: 'radio.activeForeground', id: 'radio.activeForeground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'radio.activeBorder', id: 'radio.activeBorder', class: 'line', t: LINE_T.border },
 
   // Scrollbar and minimap.
-  { role: 'scrollbar.shadow', id: 'scrollbar.shadow', paletteKey: 'bg' },
-  { role: 'scrollbarSlider.background', id: 'scrollbarSlider.background', paletteKey: 'visual' },
-  { role: 'scrollbarSlider.hoverBackground', id: 'scrollbarSlider.hoverBackground', paletteKey: 'comment' },
-  { role: 'scrollbarSlider.activeBackground', id: 'scrollbarSlider.activeBackground', paletteKey: 'comment' },
-  { role: 'minimap.background', id: 'minimap.background', paletteKey: 'bg' },
-  { role: 'minimap.findMatchHighlight', id: 'minimap.findMatchHighlight', paletteKey: 'string' },
-  { role: 'minimap.selectionHighlight', id: 'minimap.selectionHighlight', paletteKey: 'visual' },
+  { role: 'scrollbar.shadow', id: 'scrollbar.shadow', class: 'area' },
+  { role: 'scrollbarSlider.background', id: 'scrollbarSlider.background', class: 'surface', t: SURFACE_T.scrollbarSlider },
+  { role: 'scrollbarSlider.hoverBackground', id: 'scrollbarSlider.hoverBackground', class: 'surface', t: SURFACE_T.scrollbarHover },
+  { role: 'scrollbarSlider.activeBackground', id: 'scrollbarSlider.activeBackground', class: 'surface', t: SURFACE_T.scrollbarActive },
+  { role: 'minimap.background', id: 'minimap.background', class: 'area' },
+  { role: 'minimap.findMatchHighlight', id: 'minimap.findMatchHighlight', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'minimap.selectionHighlight', id: 'minimap.selectionHighlight', class: 'surface', t: SURFACE_T.selection },
+  { role: 'minimap.errorHighlight', id: 'minimap.errorHighlight', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'minimap.warningHighlight', id: 'minimap.warningHighlight', class: 'surface', t: SURFACE_T.wordHighlight },
+  { role: 'minimap.infoHighlight', id: 'minimap.infoHighlight', class: 'surface', t: SURFACE_T.wordHighlight },
 
   // Breadcrumbs and peek view.
-  { role: 'breadcrumb.background', id: 'breadcrumb.background', paletteKey: 'bg' },
-  { role: 'breadcrumb.foreground', id: 'breadcrumb.foreground', paletteKey: 'fg' },
-  { role: 'breadcrumb.focusForeground', id: 'breadcrumb.focusForeground', paletteKey: 'string' },
-  { role: 'breadcrumb.activeSelectionForeground', id: 'breadcrumb.activeSelectionForeground', paletteKey: 'string' },
-  { role: 'breadcrumbPicker.background', id: 'breadcrumbPicker.background', paletteKey: 'bg' },
-  { role: 'peekView.border', id: 'peekView.border', paletteKey: 'type' },
-  { role: 'peekViewEditor.background', id: 'peekViewEditor.background', paletteKey: 'bg' },
-  { role: 'peekViewResult.background', id: 'peekViewResult.background', paletteKey: 'bg' },
-  { role: 'peekViewResult.matchHighlightBackground', id: 'peekViewResult.matchHighlightBackground', paletteKey: 'visual' },
-  { role: 'peekViewResult.selectionBackground', id: 'peekViewResult.selectionBackground', paletteKey: 'visual' },
-  { role: 'peekViewTitle.background', id: 'peekViewTitle.background', paletteKey: 'visual' },
+  { role: 'breadcrumb.background', id: 'breadcrumb.background', class: 'area' },
+  { role: 'breadcrumb.foreground', id: 'breadcrumb.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'breadcrumb.focusForeground', id: 'breadcrumb.focusForeground', class: 'text', paletteKey: 'string', target: 4.5 },
+  { role: 'breadcrumb.activeSelectionForeground', id: 'breadcrumb.activeSelectionForeground', class: 'text', paletteKey: 'string', target: 4.5 },
+  { role: 'breadcrumbPicker.background', id: 'breadcrumbPicker.background', class: 'area' },
+  { role: 'peekView.border', id: 'peekView.border', class: 'accent', paletteKey: 'type' },
+  { role: 'peekViewEditor.background', id: 'peekViewEditor.background', class: 'area' },
+  { role: 'peekViewEditorGutter.background', id: 'peekViewEditorGutter.background', class: 'area' },
+  { role: 'peekViewResult.background', id: 'peekViewResult.background', class: 'surface', t: SURFACE_T.peekMerge },
+  { role: 'peekViewResult.matchHighlightBackground', id: 'peekViewResult.matchHighlightBackground', class: 'surface', t: SURFACE_T.findMatchHighlight },
+  { role: 'peekViewResult.selectionBackground', id: 'peekViewResult.selectionBackground', class: 'surface', t: SURFACE_T.listActiveSelection },
+  { role: 'peekViewTitle.background', id: 'peekViewTitle.background', class: 'surface', t: SURFACE_T.peekMerge },
 
-  // Merge conflict.
-  { role: 'merge.currentHeaderBackground', id: 'merge.currentHeaderBackground', paletteKey: 'visual' },
-  { role: 'merge.currentContentBackground', id: 'merge.currentContentBackground', paletteKey: 'visual' },
-  { role: 'merge.incomingHeaderBackground', id: 'merge.incomingHeaderBackground', paletteKey: 'visual' },
-  { role: 'merge.incomingContentBackground', id: 'merge.incomingContentBackground', paletteKey: 'visual' },
-  { role: 'merge.commonHeaderBackground', id: 'merge.commonHeaderBackground', paletteKey: 'visual' },
-  { role: 'merge.commonContentBackground', id: 'merge.commonContentBackground', paletteKey: 'visual' },
-  { role: 'merge.border', id: 'merge.border', paletteKey: 'comment' },
+  // Merge conflict (surfaces; headers slightly stronger).
+  { role: 'merge.currentHeaderBackground', id: 'merge.currentHeaderBackground', class: 'surface', t: SURFACE_T.mergeHeader },
+  { role: 'merge.currentContentBackground', id: 'merge.currentContentBackground', class: 'surface', t: SURFACE_T.peekMerge },
+  { role: 'merge.incomingHeaderBackground', id: 'merge.incomingHeaderBackground', class: 'surface', t: SURFACE_T.mergeHeader },
+  { role: 'merge.incomingContentBackground', id: 'merge.incomingContentBackground', class: 'surface', t: SURFACE_T.peekMerge },
+  { role: 'merge.commonHeaderBackground', id: 'merge.commonHeaderBackground', class: 'surface', t: SURFACE_T.mergeHeader },
+  { role: 'merge.commonContentBackground', id: 'merge.commonContentBackground', class: 'surface', t: SURFACE_T.peekMerge },
+  { role: 'merge.border', id: 'merge.border', class: 'line', t: LINE_T.border },
+  { role: 'editorOverviewRuler.currentContentForeground', id: 'editorOverviewRuler.currentContentForeground', class: 'accent', paletteKey: 'modified' },
+  { role: 'editorOverviewRuler.incomingContentForeground', id: 'editorOverviewRuler.incomingContentForeground', class: 'accent', paletteKey: 'info' },
+  { role: 'editorOverviewRuler.commonContentForeground', id: 'editorOverviewRuler.commonContentForeground', class: 'accent', paletteKey: 'added' },
+  { role: 'editorOverviewRuler.findMatchForeground', id: 'editorOverviewRuler.findMatchForeground', class: 'surface', t: SURFACE_T.findMatch },
+  { role: 'editorOverviewRuler.selectionHighlightForeground', id: 'editorOverviewRuler.selectionHighlightForeground', class: 'surface', t: SURFACE_T.selection },
 
-  // Diff editor (functional palette only).
-  { role: 'diffEditor.insertedTextBackground', id: 'diffEditor.insertedTextBackground', paletteKey: 'added' },
-  { role: 'diffEditor.removedTextBackground', id: 'diffEditor.removedTextBackground', paletteKey: 'removed' },
-  { role: 'diffEditor.insertedLineBackground', id: 'diffEditor.insertedLineBackground', paletteKey: 'added' },
-  { role: 'diffEditor.removedLineBackground', id: 'diffEditor.removedLineBackground', paletteKey: 'removed' },
-  { role: 'diffEditorGutter.insertedLineBackground', id: 'diffEditorGutter.insertedLineBackground', paletteKey: 'added' },
-  { role: 'diffEditorGutter.removedLineBackground', id: 'diffEditorGutter.removedLineBackground', paletteKey: 'removed' },
-  { role: 'diffEditorOverview.insertedForeground', id: 'diffEditorOverview.insertedForeground', paletteKey: 'added' },
-  { role: 'diffEditorOverview.removedForeground', id: 'diffEditorOverview.removedForeground', paletteKey: 'removed' },
+  // Diff editor (functional palette, used as-is for fidelity).
+  { role: 'diffEditor.insertedTextBackground', id: 'diffEditor.insertedTextBackground', class: 'accent', paletteKey: 'added' },
+  { role: 'diffEditor.removedTextBackground', id: 'diffEditor.removedTextBackground', class: 'accent', paletteKey: 'removed' },
+  { role: 'diffEditor.insertedLineBackground', id: 'diffEditor.insertedLineBackground', class: 'accent', paletteKey: 'added' },
+  { role: 'diffEditor.removedLineBackground', id: 'diffEditor.removedLineBackground', class: 'accent', paletteKey: 'removed' },
+  { role: 'diffEditorGutter.insertedLineBackground', id: 'diffEditorGutter.insertedLineBackground', class: 'accent', paletteKey: 'added' },
+  { role: 'diffEditorGutter.removedLineBackground', id: 'diffEditorGutter.removedLineBackground', class: 'accent', paletteKey: 'removed' },
+  { role: 'diffEditorOverview.insertedForeground', id: 'diffEditorOverview.insertedForeground', class: 'accent', paletteKey: 'added' },
+  { role: 'diffEditorOverview.removedForeground', id: 'diffEditorOverview.removedForeground', class: 'accent', paletteKey: 'removed' },
+  { role: 'diffEditor.insertedTextBorder', id: 'diffEditor.insertedTextBorder', class: 'line', t: LINE_T.border },
+  { role: 'diffEditor.removedTextBorder', id: 'diffEditor.removedTextBorder', class: 'line', t: LINE_T.border },
+  { role: 'diffEditor.border', id: 'diffEditor.border', class: 'line', t: LINE_T.border },
+  { role: 'diffEditor.diagonalFill', id: 'diffEditor.diagonalFill', class: 'area' },
 
-  // Git decorations (functional palette only).
-  { role: 'gitDecoration.addedResourceForeground', id: 'gitDecoration.addedResourceForeground', paletteKey: 'added', target: 4.5 },
-  { role: 'gitDecoration.modifiedResourceForeground', id: 'gitDecoration.modifiedResourceForeground', paletteKey: 'modified', target: 4.5 },
-  { role: 'gitDecoration.deletedResourceForeground', id: 'gitDecoration.deletedResourceForeground', paletteKey: 'removed', target: 4.5 },
-  { role: 'gitDecoration.untrackedResourceForeground', id: 'gitDecoration.untrackedResourceForeground', paletteKey: 'added', target: 4.5 },
-  { role: 'gitDecoration.ignoredResourceForeground', id: 'gitDecoration.ignoredResourceForeground', paletteKey: 'comment', target: 3.0 },
-  { role: 'gitDecoration.conflictingResourceForeground', id: 'gitDecoration.conflictingResourceForeground', paletteKey: 'warning', target: 4.5 },
-  { role: 'gitDecoration.submoduleResourceForeground', id: 'gitDecoration.submoduleResourceForeground', paletteKey: 'info', target: 4.5 },
+  // Git decorations (functional palette, text class, lifted to 4.5).
+  { role: 'gitDecoration.addedResourceForeground', id: 'gitDecoration.addedResourceForeground', class: 'text', paletteKey: 'added', target: 4.5 },
+  { role: 'gitDecoration.modifiedResourceForeground', id: 'gitDecoration.modifiedResourceForeground', class: 'text', paletteKey: 'modified', target: 4.5 },
+  { role: 'gitDecoration.deletedResourceForeground', id: 'gitDecoration.deletedResourceForeground', class: 'text', paletteKey: 'removed', target: 4.5 },
+  { role: 'gitDecoration.untrackedResourceForeground', id: 'gitDecoration.untrackedResourceForeground', class: 'text', paletteKey: 'added', target: 4.5 },
+  { role: 'gitDecoration.ignoredResourceForeground', id: 'gitDecoration.ignoredResourceForeground', class: 'text', paletteKey: 'comment', target: 3.0 },
+  { role: 'gitDecoration.conflictingResourceForeground', id: 'gitDecoration.conflictingResourceForeground', class: 'text', paletteKey: 'warning', target: 4.5 },
+  { role: 'gitDecoration.submoduleResourceForeground', id: 'gitDecoration.submoduleResourceForeground', class: 'text', paletteKey: 'info', target: 4.5 },
 
   // Notifications, menus, widgets.
-  { role: 'notifications.background', id: 'notifications.background', paletteKey: 'bg' },
-  { role: 'notifications.foreground', id: 'notifications.foreground', paletteKey: 'fg' },
-  { role: 'notifications.border', id: 'notifications.border', paletteKey: 'comment' },
-  { role: 'notificationsErrorIcon.foreground', id: 'notificationsErrorIcon.foreground', paletteKey: 'error', target: 4.5 },
-  { role: 'notificationsWarningIcon.foreground', id: 'notificationsWarningIcon.foreground', paletteKey: 'warning', target: 4.5 },
-  { role: 'notificationsInfoIcon.foreground', id: 'notificationsInfoIcon.foreground', paletteKey: 'info', target: 4.5 },
-  { role: 'menu.background', id: 'menu.background', paletteKey: 'bg' },
-  { role: 'menu.foreground', id: 'menu.foreground', paletteKey: 'fg' },
-  { role: 'menu.selectionBackground', id: 'menu.selectionBackground', paletteKey: 'visual', surface: true, target: 3.0 },
-  { role: 'menu.selectionForeground', id: 'menu.selectionForeground', paletteKey: 'fg', target: 4.5, against: 'menu.selectionBackground' },
-  { role: 'menu.separatorBackground', id: 'menu.separatorBackground', paletteKey: 'comment' },
-  { role: 'menu.border', id: 'menu.border', paletteKey: 'comment' },
-  { role: 'widget.shadow', id: 'widget.shadow', paletteKey: 'bg' },
-  { role: 'widget.border', id: 'widget.border', paletteKey: 'comment' },
-  { role: 'toolbar.hoverBackground', id: 'toolbar.hoverBackground', paletteKey: 'visual' },
+  { role: 'notifications.background', id: 'notifications.background', class: 'area' },
+  { role: 'notifications.foreground', id: 'notifications.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'notifications.border', id: 'notifications.border', class: 'line', t: LINE_T.border },
+  { role: 'notificationsErrorIcon.foreground', id: 'notificationsErrorIcon.foreground', class: 'text', paletteKey: 'error', target: 4.5 },
+  { role: 'notificationsWarningIcon.foreground', id: 'notificationsWarningIcon.foreground', class: 'text', paletteKey: 'warning', target: 4.5 },
+  { role: 'notificationsInfoIcon.foreground', id: 'notificationsInfoIcon.foreground', class: 'text', paletteKey: 'info', target: 4.5 },
+  { role: 'menu.background', id: 'menu.background', class: 'area' },
+  { role: 'menu.foreground', id: 'menu.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'menu.selectionBackground', id: 'menu.selectionBackground', class: 'surface', t: SURFACE_T.listActiveSelection },
+  { role: 'menu.selectionForeground', id: 'menu.selectionForeground', class: 'text', paletteKey: 'fg', target: 4.5, against: 'menu.selectionBackground' },
+  { role: 'menu.separatorBackground', id: 'menu.separatorBackground', class: 'line', t: LINE_T.border },
+  { role: 'menu.border', id: 'menu.border', class: 'line', t: LINE_T.border },
+  { role: 'widget.shadow', id: 'widget.shadow', class: 'area' },
+  { role: 'widget.border', id: 'widget.border', class: 'line', t: LINE_T.border },
+  { role: 'toolbar.hoverBackground', id: 'toolbar.hoverBackground', class: 'surface', t: SURFACE_T.listHover },
 
   // Debug toolbar.
-  { role: 'debugToolBar.background', id: 'debugToolBar.background', paletteKey: 'bg' },
-  { role: 'debugToolBar.border', id: 'debugToolBar.border', paletteKey: 'comment' },
-  { role: 'debugIcon.breakpointForeground', id: 'debugIcon.breakpointForeground', paletteKey: 'type' },
-  { role: 'debugIcon.breakpointDisabledForeground', id: 'debugIcon.breakpointDisabledForeground', paletteKey: 'comment', target: 3.0 },
+  { role: 'debugToolBar.background', id: 'debugToolBar.background', class: 'area' },
+  { role: 'debugToolBar.border', id: 'debugToolBar.border', class: 'line', t: LINE_T.border },
+  { role: 'debugIcon.breakpointForeground', id: 'debugIcon.breakpointForeground', class: 'accent', paletteKey: 'type' },
+  { role: 'debugIcon.breakpointDisabledForeground', id: 'debugIcon.breakpointDisabledForeground', class: 'text', paletteKey: 'comment', target: 3.0 },
 
   // Chat / agent panels.
-  { role: 'agentsChatInput.background', id: 'agentsChatInput.background', paletteKey: 'bg' },
-  { role: 'agentsChatInput.foreground', id: 'agentsChatInput.foreground', paletteKey: 'fg' },
-  { role: 'agentsChatInput.border', id: 'agentsChatInput.border', paletteKey: 'comment' },
-  { role: 'chat.requestBackground', id: 'chat.requestBackground', paletteKey: 'visual' },
-  { role: 'chat.requestBorder', id: 'chat.requestBorder', paletteKey: 'comment' },
-  { role: 'activeSessionView.background', id: 'activeSessionView.background', paletteKey: 'bg' },
-  { role: 'activeSessionView.foreground', id: 'activeSessionView.foreground', paletteKey: 'fg' },
+  { role: 'agentsChatInput.background', id: 'agentsChatInput.background', class: 'area' },
+  { role: 'agentsChatInput.foreground', id: 'agentsChatInput.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'agentsChatInput.border', id: 'agentsChatInput.border', class: 'line', t: LINE_T.border },
+  { role: 'chat.requestBackground', id: 'chat.requestBackground', class: 'surface', t: SURFACE_T.peekMerge },
+  { role: 'chat.requestBorder', id: 'chat.requestBorder', class: 'line', t: LINE_T.border },
+  { role: 'activeSessionView.background', id: 'activeSessionView.background', class: 'area' },
+  { role: 'activeSessionView.foreground', id: 'activeSessionView.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
 
   // Base colors.
-  { role: 'foreground', id: 'foreground', paletteKey: 'fg' },
-  { role: 'descriptionForeground', id: 'descriptionForeground', paletteKey: 'comment', target: 3.0 },
-  { role: 'focusBorder', id: 'focusBorder', paletteKey: 'type' },
-  { role: 'contrastBorder', id: 'contrastBorder', paletteKey: 'comment' },
-  { role: 'selection.background', id: 'selection.background', paletteKey: 'visual' },
+  { role: 'foreground', id: 'foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'descriptionForeground', id: 'descriptionForeground', class: 'text', paletteKey: 'comment', target: 3.0 },
+  { role: 'focusBorder', id: 'focusBorder', class: 'line', t: LINE_T.border },
+  { role: 'contrastBorder', id: 'contrastBorder', class: 'line', t: LINE_T.border },
+  { role: 'selection.background', id: 'selection.background', class: 'surface', t: SURFACE_T.selection },
+  { role: 'icon.foreground', id: 'icon.foreground', class: 'text', paletteKey: 'fg', target: 4.5 },
+  { role: 'errorForeground', id: 'errorForeground', class: 'text', paletteKey: 'error', target: 4.5 },
 ];
 
-// The 16 ANSI terminal colors, derived from Venom's colormap (docs/ARCHITECTURE.md
-// requires all 16 ANSI colors from Venom's colormap). Each maps a terminal color id
-// to the palette key it is derived from; the build expands this into the
-// terminal.ansi* and terminal.ansiBright* ids.
+// The 16 ANSI terminal colors, derived from Venom's colormap
+// (docs/ARCHITECTURE.md requires all 16 ANSI colors from Venom's
+// colormap). These are accents: the palette color, used as-is.
 export const terminalAnsiRules = [
   { id: 'terminal.ansiBlack', paletteKey: 'alt_bg' },
   { id: 'terminal.ansiRed', paletteKey: 'diag_red' },
