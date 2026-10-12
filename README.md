@@ -41,11 +41,13 @@ your theme looks plain, set `editor.semanticHighlighting.enabled` to `true`.
 
 ## Screenshots
 
-Screenshots are committed in the repository (no remote images are required to
-read this page):
+**Benom** (pure black):
 
-- Base variant on dark code: `docs/images/benom.png`
-- Alt variant on dark code: `docs/images/benom-alt.png`
+![Benom](docs/images/benom.png)
+
+**Benom Alt** (warm dark brown):
+
+![Benom Alt](docs/images/benom-alt.png)
 
 ## Credit
 

@@ -16,7 +16,8 @@ or a repository secret.
 
 ### 2. Create the Azure DevOps PAT
 
-`vsce publish` authenticates with a Personal Access Token from Azure DevOps:
+`vsce publish` authenticates with a Personal Access Token from Azure DevOps. If you have no Azure DevOps
+organization yet, create a free one first at https://dev.azure.com (the token page does not exist without one):
 
 1. Open your Azure DevOps user settings → **Personal access tokens**.
 2. Create a token with scope **Marketplace → Manage** for **all accessible

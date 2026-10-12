@@ -1,0 +1,46 @@
+name: Release
+# Push a tag like v0.1.0 (it must equal the version in package.json) to build, test, package, create a
+# GitHub Release, and publish. Publishing steps run only when their secret exists.
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Tag must match package.json version
+        run: |
+          v=$(node -p "require('./package.json').version")
+          [ "refs/tags/v$v" = "$GITHUB_REF" ] || { echo "tag $GITHUB_REF does not match version $v"; exit 1; }
+      - run: npm run build
+      - name: Generated files must be committed (no drift)
+        run: git diff --exit-code -- themes DECISIONS.md
+      - run: npm test
+      - run: npm run package
+      - name: GitHub Release
+        run: gh release create "$GITHUB_REF_NAME" *.vsix --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Publish to the VS Code Marketplace
+        if: ${{ env.VSCE_PAT != '' }}
+        run: npx --no-install vsce publish --packagePath *.vsix --pat "$VSCE_PAT"
+      - name: Skipped Marketplace publish
+        if: ${{ env.VSCE_PAT == '' }}
+        run: echo "VSCE_PAT secret not set, skipping Marketplace publish (see docs/PUBLISHING.md)"
+      - name: Publish to Open VSX
+        if: ${{ env.OVSX_PAT != '' }}
+        run: npx --no-install ovsx publish *.vsix --pat "$OVSX_PAT"
+      - name: Skipped Open VSX publish
+        if: ${{ env.OVSX_PAT == '' }}
+        run: echo "OVSX_PAT secret not set, skipping Open VSX publish (see docs/PUBLISHING.md)"
