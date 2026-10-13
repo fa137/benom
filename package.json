@@ -48,7 +48,7 @@
   },
   "scripts": {
     "build": "node scripts/build.mjs",
-    "test": "node --test test/*.test.mjs",
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
     "check": "npm run build && node scripts/check.mjs",
     "audit": "node scripts/audit.mjs",
     "package": "npm run build && vsce package",
