@@ -28,10 +28,6 @@ jobs:
         run: git diff --exit-code -- themes DECISIONS.md
       - run: npm test
       - run: npm run package
-      - name: GitHub Release
-        run: gh release create "$GITHUB_REF_NAME" *.vsix --generate-notes
-        env:
-          GH_TOKEN: ${{ github.token }}
       - name: Publish to the VS Code Marketplace
         if: ${{ env.VSCE_PAT != '' }}
         run: npx --no-install vsce publish --packagePath *.vsix --pat "$VSCE_PAT"
@@ -44,3 +40,8 @@ jobs:
       - name: Skipped Open VSX publish
         if: ${{ env.OVSX_PAT == '' }}
         run: echo "OVSX_PAT secret not set, skipping Open VSX publish (see docs/PUBLISHING.md)"
+      # Last, so a failed publish leaves no stray release; upload makes a re-run safe.
+      - name: GitHub Release
+        run: gh release create "$GITHUB_REF_NAME" *.vsix --generate-notes || gh release upload "$GITHUB_REF_NAME" *.vsix --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}
