@@ -206,6 +206,9 @@ export function mix(a, b, t) {
  * - area:    the editor-area background for EDITOR_AREAS roles, the UI
  *            background for every other area.
  * - accent:  the palette color, used as-is (fidelity).
+ * - tint:    mix(paletteColor, editorBackground, t) — diff text/line
+ *            backgrounds, tinted so the editor foreground stays
+ *            readable on top.
  *
  * For surface and line roles, `background` is the editor-area background
  * for editor.* and EDITOR_AREAS roles, and the UI background otherwise.
@@ -372,6 +375,14 @@ function deriveColor(rule, variant, palette, liftCache, mixFg, textLiftLog, surf
       return EDITOR_AREAS.has(rule.id) ? variant.background : variant.uiBackground;
     case 'accent':
       return paletteValue(rule.paletteKey, palette);
+    case 'tint': {
+      // Diff text/line backgrounds: the palette color mixed with the
+      // editor background (t = background share), keeping the editor
+      // foreground readable on top.
+      const color = mix(paletteValue(rule.paletteKey, palette), variant.background, rule.t);
+      surfaceLog.add(rule.id, 'tint', rule.t, variant.key, color, contrast(color, variant.background), contrast(palette.core.fg, color));
+      return color;
+    }
     default:
       throw new Error(`unknown class ${rule.class} for ${rule.id}`);
   }

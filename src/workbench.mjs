@@ -19,6 +19,10 @@
 //           background itself.
 // - accent  colored accents (red/teal borders, badges, diff markers,
 //           terminal ANSI). The palette color, used as-is for fidelity.
+// - tint    diff text/line backgrounds inside the editor: the palette
+//           color mixed with the editor background (share t), so the
+//           text on top keeps its contrast (full-brightness red/green
+//           backgrounds made #c1c1c1 text nearly unreadable).
 //
 // Gate 3 (docs/ARCHITECTURE.md): every `id` must be a real VS Code
 // color id, checked against the committed allowlist in
@@ -270,11 +274,13 @@ export const workbenchRules = [
   { role: 'editorOverviewRuler.findMatchForeground', id: 'editorOverviewRuler.findMatchForeground', class: 'surface', t: SURFACE_T.findMatch },
   { role: 'editorOverviewRuler.selectionHighlightForeground', id: 'editorOverviewRuler.selectionHighlightForeground', class: 'surface', t: SURFACE_T.selection },
 
-  // Diff editor (functional palette, used as-is for fidelity).
-  { role: 'diffEditor.insertedTextBackground', id: 'diffEditor.insertedTextBackground', class: 'accent', paletteKey: 'added' },
-  { role: 'diffEditor.removedTextBackground', id: 'diffEditor.removedTextBackground', class: 'accent', paletteKey: 'removed' },
-  { role: 'diffEditor.insertedLineBackground', id: 'diffEditor.insertedLineBackground', class: 'accent', paletteKey: 'added' },
-  { role: 'diffEditor.removedLineBackground', id: 'diffEditor.removedLineBackground', class: 'accent', paletteKey: 'removed' },
+  // Diff editor (functional palette; in-editor text/line backgrounds are
+  // tinted so the editor foreground stays readable on them; gutter and
+  // overview markers stay as-is accents).
+  { role: 'diffEditor.insertedTextBackground', id: 'diffEditor.insertedTextBackground', class: 'tint', paletteKey: 'added', t: 0.8 },
+  { role: 'diffEditor.removedTextBackground', id: 'diffEditor.removedTextBackground', class: 'tint', paletteKey: 'removed', t: 0.8 },
+  { role: 'diffEditor.insertedLineBackground', id: 'diffEditor.insertedLineBackground', class: 'tint', paletteKey: 'added', t: 0.9 },
+  { role: 'diffEditor.removedLineBackground', id: 'diffEditor.removedLineBackground', class: 'tint', paletteKey: 'removed', t: 0.9 },
   { role: 'diffEditorGutter.insertedLineBackground', id: 'diffEditorGutter.insertedLineBackground', class: 'accent', paletteKey: 'added' },
   { role: 'diffEditorGutter.removedLineBackground', id: 'diffEditorGutter.removedLineBackground', class: 'accent', paletteKey: 'removed' },
   { role: 'diffEditorOverview.insertedForeground', id: 'diffEditorOverview.insertedForeground', class: 'accent', paletteKey: 'added' },

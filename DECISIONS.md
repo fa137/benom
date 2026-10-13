@@ -58,6 +58,10 @@ Each workbench key has a class that says how its color is derived
   hints, diff diagonal fill) use the 5%-shifted editor background;
   every other area (sidebar, panel, inactive tabs, widgets) use the UI
   background; the terminal uses its own per-variant background.
+- **tint** — diff text/line backgrounds inside the editor. The palette
+  color mixed with the editor background (text 80% background, line 90%)
+  so the editor foreground keeps its contrast on top: full-brightness
+  red/green backgrounds made the text nearly unreadable.
 - **accent** — colored accents (red/teal borders, badges, diff
   markers, terminal ANSI). The palette color, used as-is for
   fidelity; not gated by contrast. Two exceptions: the tag role
@@ -341,6 +345,10 @@ background, and "fg on color" is editor.foreground on that color.
 | merge.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
 | editorOverviewRuler.findMatchForeground | surface | base | 0.22 | #2e2e2e | 1.50:1 | 7.54:1 |
 | editorOverviewRuler.selectionHighlightForeground | surface | base | 0.16 | #232323 | 1.30:1 | 8.73:1 |
+| diffEditor.insertedTextBackground | tint | base | 0.80 | #2a312a | 1.32:1 | 7.42:1 |
+| diffEditor.removedTextBackground | tint | base | 0.80 | #461e1d | 1.23:1 | 7.97:1 |
+| diffEditor.insertedLineBackground | tint | base | 0.90 | #222522 | 1.14:1 | 8.60:1 |
+| diffEditor.removedLineBackground | tint | base | 0.90 | #301b1b | 1.09:1 | 8.99:1 |
 | diffEditor.insertedTextBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
 | diffEditor.removedTextBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
 | diffEditor.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
@@ -443,6 +451,10 @@ background, and "fg on color" is editor.foreground on that color.
 | merge.border | line | alt | 0.12 | #1d1c1b | 1.20:1 |  |
 | editorOverviewRuler.findMatchForeground | surface | alt | 0.22 | #302e2e | 1.51:1 | 7.50:1 |
 | editorOverviewRuler.selectionHighlightForeground | surface | alt | 0.16 | #252322 | 1.30:1 | 8.69:1 |
+| diffEditor.insertedTextBackground | tint | alt | 0.80 | #34352d | 1.32:1 | 6.89:1 |
+| diffEditor.removedTextBackground | tint | alt | 0.80 | #502220 | 1.24:1 | 7.33:1 |
+| diffEditor.insertedLineBackground | tint | alt | 0.90 | #2c2925 | 1.13:1 | 8.04:1 |
+| diffEditor.removedLineBackground | tint | alt | 0.90 | #3b201f | 1.10:1 | 8.26:1 |
 | diffEditor.insertedTextBorder | line | alt | 0.12 | #1d1c1b | 1.20:1 |  |
 | diffEditor.removedTextBorder | line | alt | 0.12 | #1d1c1b | 1.20:1 |  |
 | diffEditor.border | line | alt | 0.12 | #1d1c1b | 1.20:1 |  |
