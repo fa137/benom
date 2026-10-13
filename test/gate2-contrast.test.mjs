@@ -41,8 +41,8 @@ function contrast(a, b) {
 }
 
 const VARIANTS = [
-  { file: 'themes/benom-color-theme.json', background: '#1a1a1a', uiBackground: '#050505', key: 'base' },
-  { file: 'themes/benom-alt-color-theme.json', background: '#1e1614', uiBackground: '#140e0d', key: 'alt' },
+  { file: 'themes/benom-color-theme.json', background: '#191919', uiBackground: '#050505', terminal: '#0d0d0d', key: 'base' },
+  { file: 'themes/benom-alt-color-theme.json', background: '#251e1d', uiBackground: '#070504', terminal: '#141110', key: 'alt' },
 ];
 
 function loadTheme(variant) {
@@ -136,7 +136,9 @@ for (const variant of VARIANTS) {
     const theme = loadTheme(variant);
     const bad = [];
     for (const rule of workbenchRules.filter((r) => r.class === 'area')) {
-      const expected = EDITOR_AREAS.has(rule.id) ? variant.background : variant.uiBackground;
+      const expected = rule.id === 'terminal.background'
+        ? variant.terminal
+        : EDITOR_AREAS.has(rule.id) ? variant.background : variant.uiBackground;
       if (theme.colors[rule.id] !== expected) {
         bad.push(`${rule.id} ${theme.colors[rule.id]} != ${expected}`);
       }
@@ -147,20 +149,23 @@ for (const variant of VARIANTS) {
   test(`gate2: ${variant.file} editor areas shift, UI areas keep the original background`, () => {
     const theme = loadTheme(variant);
     // The editor canvas and editor-only areas (gutter, active tab,
-    // breadcrumbs) use the 5%-shifted editor background; the sidebar,
-    // panel, terminal, inactive tabs and widgets use the UI background
-    // (2% lighter on base, 40% darker on alt); activityBar, titleBar and
+    // breadcrumbs) use the shifted editor background; the terminal uses
+    // its own per-variant background (50% darker than the editor bg on
+    // base, 45% darker on alt); the sidebar, panel, inactive tabs
+    // and widgets use the UI background
+    // (2% lighter on base, 80% darker on alt); activityBar, titleBar and
     // statusBar are chrome.
     for (const id of ['editor.background', 'editorGutter.background', 'tab.activeBackground', 'breadcrumb.background']) {
       assert.equal(theme.colors[id], variant.background, `${id} should be the editor background`);
     }
-    for (const id of ['sideBar.background', 'panel.background', 'terminal.background', 'tab.inactiveBackground', 'editorWidget.background', 'input.background', 'dropdown.background']) {
+    assert.equal(theme.colors['terminal.background'], variant.terminal, 'terminal.background should be the variant terminal background');
+    for (const id of ['sideBar.background', 'panel.background', 'tab.inactiveBackground', 'editorWidget.background', 'input.background', 'dropdown.background']) {
       assert.equal(theme.colors[id], variant.uiBackground, `${id} should be the UI background`);
     }
     if (variant.key === 'alt') {
-      // Chrome on alt is mix(#140e0d, #000000, 0.25) = #0f0b0a.
+      // Chrome on alt is mix(#070504, #000000, 0.25) = #050403.
       for (const id of ['activityBar.background', 'titleBar.activeBackground', 'statusBar.background']) {
-        assert.equal(theme.colors[id], '#0f0b0a', `${id} should be the chrome mix on alt`);
+        assert.equal(theme.colors[id], '#050403', `${id} should be the chrome mix on alt`);
       }
     }
   });

@@ -4,15 +4,19 @@
 // Reads src/palette.json, src/tokens.mjs and src/workbench.mjs, lifts any color
 // below its contrast target to the nearest lighter shade of the same hue, and
 // writes:
-//   themes/benom-color-theme.json       (base variant, editor #1a1a1a, UI #050505)
-//   themes/benom-alt-color-theme.json   (alt variant, editor #1e1614, UI #140e0d)
+//   themes/benom-color-theme.json       (base variant, editor #191919, UI #050505, terminal #0d0d0d)
+//   themes/benom-alt-color-theme.json   (alt variant, editor #251e1d, UI #070504, terminal #141110)
 //
-// Each variant has two backgrounds: the editor-area background, shifted
-// from the original Venom background (10% lighter on base, 8% darker on
-// alt) and used for the editor canvas and editor-only areas (see
-// EDITOR_AREAS), and the UI background, shifted the same way (2% lighter
-// on base, 40% darker on alt) and used for the sidebar, panels, terminal,
-// title bar, status bar, widgets and inputs.
+// Each variant has three backgrounds: the editor-area background, shifted
+// from the original Venom background (10% lighter then 3% darker on
+// base, 23% darker
+// then 5% lighter on alt) and used for the editor canvas and editor-only
+// areas (see
+// EDITOR_AREAS); the terminal background, the editor background shifted
+// darker (50% on base, 45% on alt) for a distinct terminal
+// surface; and the UI background, shifted the same way as the
+// editor (2% lighter on base, 80% darker on alt) and used for the
+// sidebar, panels, title bar, status bar, widgets and inputs.
 //   DECISIONS.md                        (generated section between stable markers)
 //
 // The build is deterministic: no timestamps, no randomness, fixed iteration
@@ -135,12 +139,13 @@ export function liftColor(hex, background, target, lighterShades) {
 // ---------------------------------------------------------------------------
 
 const VARIANTS = [
-  { key: 'base', name: 'Benom', background: mix('#000000', '#ffffff', 0.10), uiBackground: mix('#000000', '#ffffff', 0.02) },
-  { key: 'alt', name: 'Benom Alt', background: mix('#211816', '#000000', 0.08), uiBackground: mix('#211816', '#000000', 0.40) },
+  { key: 'base', name: 'Benom', background: mix(mix('#000000', '#ffffff', 0.10), '#000000', 0.03), uiBackground: mix('#000000', '#ffffff', 0.02), terminal: mix(mix(mix('#000000', '#ffffff', 0.10), '#000000', 0.03), '#000000', 0.50) },
+  { key: 'alt', name: 'Benom Alt', background: mix(mix('#211816', '#000000', 0.23), '#ffffff', 0.05), uiBackground: mix('#211816', '#000000', 0.80), terminal: mix(mix(mix('#211816', '#000000', 0.23), '#ffffff', 0.05), '#000000', 0.45) },
 ];
 
-// Roles whose background is the editor-area background (the 5% shift). Every
-// other 'area' role keeps the original UI background.
+// Roles whose background is the editor-area background. Every other
+// 'area' role uses the UI background; the terminal background is its
+// own per-variant value (see VARIANTS.terminal).
 export const EDITOR_AREAS = new Set([
   'editor.background',
   'editorGutter.background',
@@ -236,12 +241,23 @@ function buildVariant(variant, palette, textLiftLog, surfaceLog) {
     colors[rule.id] = deriveColor(rule, variant, palette, liftCache, mixFg, textLiftLog, surfaceLog, surface);
   }
 
-  // Terminal ANSI colors from Venom's colormap (accents, as-is).
+  // Terminal ANSI colors from Venom's colormap (accents, as-is), with one
+  // exception: ANSI black is derived, because Venom's colormap black
+  // (#211816) is nearly invisible on dark terminal backgrounds. Mix the
+  // terminal background 35% toward black when it is light (luminance
+  // above 0.15) and toward the text color when it is dark (base #0d0d0d →
+  // #4c4c4c, alt #141110 → #514f4e), so "black" always reads as a step
+  // away from the terminal
+  // background.
+  const terminalBg = variant.terminal;
+  const ansiBlack = mix(terminalBg, relativeLuminance(terminalBg) > 0.15 ? '#000000' : mixFg, 0.35);
   for (const rule of terminalAnsiRules) {
     if (rule.id in colors) {
       throw new Error(`duplicate terminal id: ${rule.id}`);
     }
-    colors[rule.id] = paletteValue(rule.paletteKey, palette);
+    colors[rule.id] = rule.id === 'terminal.ansiBlack'
+      ? ansiBlack
+      : paletteValue(rule.paletteKey, palette);
   }
 
   // Force the variant's editor background to the documented value.
@@ -255,9 +271,13 @@ function buildVariant(variant, palette, textLiftLog, surfaceLog) {
   for (const rule of tokenRules) {
     const target = rule.paletteKey === 'comment' ? COMMENT_TARGET : DEFAULT_TARGET;
     const resolved = resolveTextColor(rule.paletteKey, variant, palette, liftCache, target);
+    // Per-variant accent darkening (see ACCENT_DARKEN): applied after the
+    // contrast lift so the tone-down is visible and not re-lifted away.
+    const darken = ACCENT_DARKEN[variant.key]?.[rule.role];
+    const hex = darken ? mix(resolved.hex, '#000000', darken) : resolved.hex;
     const entry = {
       scope: rule.scopes,
-      settings: { foreground: resolved.hex.toUpperCase() },
+      settings: { foreground: hex.toUpperCase() },
     };
     if (rule.fontStyle) entry.settings.fontStyle = rule.fontStyle;
     tokenColors.push(entry);
@@ -285,16 +305,31 @@ function buildVariant(variant, palette, textLiftLog, surfaceLog) {
 }
 
 /**
+ * Per-variant darkening of accent token colors (mix toward black).
+ *
+ * Venom's bright red "type" accent (#FC302E, used for HTML/XML tags) reads
+ * as a harsh orange on both dark editor backgrounds, so both variants
+ * tone the tag role down by 25% (base #BD2423, alt #BD2C2A after the
+ * contrast lift).
+ */
+const ACCENT_DARKEN = {
+  base: { tag: 0.25 },
+  alt: { tag: 0.25 },
+};
+
+/**
  * Per-variant overrides for surface mix factors (t).
  *
- * The base variant's editor background is #1a1a1a (10% lighter), so the
- * default line-highlight t (0.05) yields #222222, which is nearly
- * invisible on it. The base variant uses t 0.09 (about #292929) instead.
- * The alt variant keeps the default t.
+ * The base variant's editor background is #191919 (10% lighter, then
+ * 3% darker), so the default line-highlight t (0.05) yields #212121,
+ * which is nearly invisible on it. The base variant uses t 0.09 (about
+ * #282828) instead.
+ * The alt variant's editor background is #251e1d, which is dark for the
+ * same reason, so it uses t 0.09 (about #332d2c) too.
  */
 const SURFACE_T_OVERRIDES = {
   base: { 'editor.lineHighlightBackground': 0.09 },
-  alt: {},
+  alt: { 'editor.lineHighlightBackground': 0.09 },
 };
 
 function surfaceT(rule, variant) {
@@ -333,6 +368,7 @@ function deriveColor(rule, variant, palette, liftCache, mixFg, textLiftLog, surf
       return color;
     }
     case 'area':
+      if (rule.id === 'terminal.background') return variant.terminal;
       return EDITOR_AREAS.has(rule.id) ? variant.background : variant.uiBackground;
     case 'accent':
       return paletteValue(rule.paletteKey, palette);

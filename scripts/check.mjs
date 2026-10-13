@@ -28,8 +28,8 @@ const palette = JSON.parse(readFileSync(join(root, 'src/palette.json'), 'utf8'))
 const known = new Set(JSON.parse(readFileSync(join(root, 'test/known-colors.json'), 'utf8')).colors);
 
 const VARIANTS = [
-  { file: 'themes/benom-color-theme.json', background: '#1a1a1a', uiBackground: '#050505' },
-  { file: 'themes/benom-alt-color-theme.json', background: '#1e1614', uiBackground: '#140e0d' },
+  { file: 'themes/benom-color-theme.json', background: '#191919', uiBackground: '#050505' },
+  { file: 'themes/benom-alt-color-theme.json', background: '#251e1d', uiBackground: '#070504' },
 ];
 
 // Gate 1: valid JSON and hex.
