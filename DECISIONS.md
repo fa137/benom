@@ -58,11 +58,12 @@ Each workbench key has a class that says how its color is derived
   hints, diff diagonal fill) use the 5%-shifted editor background;
   every other area (sidebar, panel, inactive tabs, widgets) use the UI
   background; the terminal uses its own per-variant background.
-- **tint** — diff text/line backgrounds inside the editor and the diff
-  gutter line markers. The palette color mixed with the editor
-  background (text 80% background, lines 90%, gutter 95%) so the editor
-  foreground and line numbers keep their contrast on top: full-brightness
-  red/green backgrounds made them nearly unreadable.
+- **tint** — diff text/line backgrounds inside the editor, the diff
+  gutter line markers, and the diff overview-ruler / minimap diff blocks.
+  The palette color mixed with the editor background (text 80% background,
+  lines 90%, gutter 95%, overview 90%) so the editor foreground and line
+  numbers keep their contrast on top and the minimap blocks stay quiet:
+  full-brightness red/green made them nearly unreadable / glaring.
 - **accent** — colored accents (red/teal borders, badges, diff
   markers, terminal ANSI). The palette color, used as-is for
   fidelity; not gated by contrast. Two exceptions: the tag role
@@ -352,6 +353,8 @@ background, and "fg on color" is editor.foreground on that color.
 | diffEditor.removedLineBackground | tint | base | 0.90 | #301b1b | 1.09:1 | 8.99:1 |
 | diffEditorGutter.insertedLineBackground | tint | base | 0.95 | #1d1f1d | 1.06:1 | 9.21:1 |
 | diffEditorGutter.removedLineBackground | tint | base | 0.95 | #241a1a | 1.04:1 | 9.43:1 |
+| diffEditorOverview.insertedForeground | tint | base | 0.90 | #222522 | 1.14:1 | 8.60:1 |
+| diffEditorOverview.removedForeground | tint | base | 0.90 | #301b1b | 1.09:1 | 8.99:1 |
 | diffEditor.insertedTextBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
 | diffEditor.removedTextBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
 | diffEditor.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
@@ -460,6 +463,8 @@ background, and "fg on color" is editor.foreground on that color.
 | diffEditor.removedLineBackground | tint | alt | 0.90 | #3b201f | 1.10:1 | 8.26:1 |
 | diffEditorGutter.insertedLineBackground | tint | alt | 0.95 | #292421 | 1.07:1 | 8.52:1 |
 | diffEditorGutter.removedLineBackground | tint | alt | 0.95 | #301f1e | 1.05:1 | 8.70:1 |
+| diffEditorOverview.insertedForeground | tint | alt | 0.90 | #2c2925 | 1.13:1 | 8.04:1 |
+| diffEditorOverview.removedForeground | tint | alt | 0.90 | #3b201f | 1.10:1 | 8.26:1 |
 | diffEditor.insertedTextBorder | line | alt | 0.12 | #1d1c1b | 1.20:1 |  |
 | diffEditor.removedTextBorder | line | alt | 0.12 | #1d1c1b | 1.20:1 |  |
 | diffEditor.border | line | alt | 0.12 | #1d1c1b | 1.20:1 |  |
