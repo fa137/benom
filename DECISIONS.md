@@ -68,9 +68,9 @@ Each workbench key has a class that says how its color is derived
   markers, terminal ANSI). The palette color, used as-is for
   fidelity; not gated by contrast. Two exceptions: the tag role
   (HTML/XML tags, Venom's red `#FC302E`) is toned down by 25% in both
-  variants (base `#BD2423`, alt `#BD2C2A` after the contrast lift) —
+  variants, then lifted back to 4.5:1 (base `#DF5353`, alt `#DB5F5D`) —
   the bright red reads as a harsh orange on the dark editor
-  backgrounds; and terminal `ansiBlack` is derived from the variant's
+  backgrounds, and darkening alone fell to about 2.9:1; and terminal `ansiBlack` is derived from the variant's
   terminal background mixed 35% toward black when the terminal is light
   and toward the text color when it is dark (base `#4c4c4c` on `#0d0d0d`,
   alt `#514f4e` on `#141110`) — Venom's colormap black

@@ -275,9 +275,12 @@ function buildVariant(variant, palette, textLiftLog, surfaceLog) {
     const target = rule.paletteKey === 'comment' ? COMMENT_TARGET : DEFAULT_TARGET;
     const resolved = resolveTextColor(rule.paletteKey, variant, palette, liftCache, target);
     // Per-variant accent darkening (see ACCENT_DARKEN): applied after the
-    // contrast lift so the tone-down is visible and not re-lifted away.
+    // contrast lift, then re-lifted to the text target (darkening alone
+    // drops below 4.5:1), which lands on a softer red, not the harsh original.
     const darken = ACCENT_DARKEN[variant.key]?.[rule.role];
-    const hex = darken ? mix(resolved.hex, '#000000', darken) : resolved.hex;
+    const hex = darken
+      ? liftColor(mix(resolved.hex, '#000000', darken), variant.background, target).hex
+      : resolved.hex;
     const entry = {
       scope: rule.scopes,
       settings: { foreground: hex.toUpperCase() },
@@ -312,8 +315,8 @@ function buildVariant(variant, palette, textLiftLog, surfaceLog) {
  *
  * Venom's bright red "type" accent (#FC302E, used for HTML/XML tags) reads
  * as a harsh orange on both dark editor backgrounds, so both variants
- * tone the tag role down by 25% (base #BD2423, alt #BD2C2A after the
- * contrast lift).
+ * tone the tag role down by 25%, then lift it back to 4.5:1 (base
+ * #DF5353, alt #DB5F5D).
  */
 const ACCENT_DARKEN = {
   base: { tag: 0.25 },
