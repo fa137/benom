@@ -2,7 +2,7 @@
   "name": "benom",
   "displayName": "Benom",
   "description": "A dark VS Code theme in two variants, built from the Venom palette.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "fa137",
   "license": "Apache-2.0",
   "type": "module",
