@@ -440,7 +440,9 @@ function renderDecisionsSection(textLiftLog, surfaceLog) {
   lines.push('| Role | Variant | Before | After | Contrast ratio |');
   lines.push('|---|---|---|---|---|');
   for (const e of textLiftLog.entries) {
-    lines.push(`| ${e.name} | ${e.variant} | ${e.before} | ${e.after} | ${e.ratio.toFixed(2)}:1 |`);
+    // One-decimal ratios: 2nd-decimal shifts (e.g. 3.08:1 → 3.11:1) would
+    // otherwise mark every row as changed in git diffs of this file.
+    lines.push(`| ${e.name} | ${e.variant} | ${e.before} | ${e.after} | ${e.ratio.toFixed(1)}:1 |`);
   }
   lines.push('');
   lines.push('## Generated: derived surfaces, lines and chrome');
