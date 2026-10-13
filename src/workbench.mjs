@@ -274,15 +274,15 @@ export const workbenchRules = [
   { role: 'editorOverviewRuler.findMatchForeground', id: 'editorOverviewRuler.findMatchForeground', class: 'surface', t: SURFACE_T.findMatch },
   { role: 'editorOverviewRuler.selectionHighlightForeground', id: 'editorOverviewRuler.selectionHighlightForeground', class: 'surface', t: SURFACE_T.selection },
 
-  // Diff editor (functional palette; in-editor text/line backgrounds are
-  // tinted so the editor foreground stays readable on them; gutter and
-  // overview markers stay as-is accents).
+  // Diff editor (functional palette; in-editor text/line backgrounds and
+  // gutter line markers are tinted so the line numbers and editor
+  // foreground stay readable on top; overview markers stay as-is accents).
   { role: 'diffEditor.insertedTextBackground', id: 'diffEditor.insertedTextBackground', class: 'tint', paletteKey: 'added', t: 0.8 },
   { role: 'diffEditor.removedTextBackground', id: 'diffEditor.removedTextBackground', class: 'tint', paletteKey: 'removed', t: 0.8 },
   { role: 'diffEditor.insertedLineBackground', id: 'diffEditor.insertedLineBackground', class: 'tint', paletteKey: 'added', t: 0.9 },
   { role: 'diffEditor.removedLineBackground', id: 'diffEditor.removedLineBackground', class: 'tint', paletteKey: 'removed', t: 0.9 },
-  { role: 'diffEditorGutter.insertedLineBackground', id: 'diffEditorGutter.insertedLineBackground', class: 'accent', paletteKey: 'added' },
-  { role: 'diffEditorGutter.removedLineBackground', id: 'diffEditorGutter.removedLineBackground', class: 'accent', paletteKey: 'removed' },
+  { role: 'diffEditorGutter.insertedLineBackground', id: 'diffEditorGutter.insertedLineBackground', class: 'tint', paletteKey: 'added', t: 0.95 },
+  { role: 'diffEditorGutter.removedLineBackground', id: 'diffEditorGutter.removedLineBackground', class: 'tint', paletteKey: 'removed', t: 0.95 },
   { role: 'diffEditorOverview.insertedForeground', id: 'diffEditorOverview.insertedForeground', class: 'accent', paletteKey: 'added' },
   { role: 'diffEditorOverview.removedForeground', id: 'diffEditorOverview.removedForeground', class: 'accent', paletteKey: 'removed' },
   { role: 'diffEditor.insertedTextBorder', id: 'diffEditor.insertedTextBorder', class: 'line', t: LINE_T.border },
