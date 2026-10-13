@@ -14,8 +14,8 @@ stays readable through long sessions.
 
 | Variant | Editor background | Notes |
 | --- | --- | --- |
-| **Benom** | `#000000` (pure black) | The default; areas are separated with quiet borders. |
-| **Benom Alt** | `#211816` (warm dark brown) | The source's `alt_bg`; chrome is a step darker than the editor. |
+| **Benom** | `#191919` (neutral charcoal) | The default; sidebar and chrome are near-black, the editor a step lighter. |
+| **Benom Alt** | `#251e1d` (warm dark brown) | Derived from the source's `alt_bg` (`#211816`); chrome is a step darker than the editor. |
 
 Both variants enable semantic highlighting (`editor.semanticHighlighting.enabled`)
 so functions, types, properties and decorators are colored by the language
@@ -41,7 +41,7 @@ your theme looks plain, set `editor.semanticHighlighting.enabled` to `true`.
 
 ## Screenshots
 
-**Benom** (pure black):
+**Benom** (neutral charcoal):
 
 ![Benom](docs/images/benom.png)
 
