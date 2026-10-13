@@ -3,10 +3,10 @@
 Benom is a VS Code color theme with two variants, built from the **Venom** palette of
 [black-metal-theme-neovim](https://github.com/metalelf0/black-metal-theme-neovim) (Apache-2.0, see NOTICE).
 
-| Variant | Theme name | Editor background |
-|---|---|---|
-| Benom | `Benom` | `#000000` (pure black) |
-| Benom Alt | `Benom Alt` | `#211816` (the source's `alt_bg`, a warm dark brown) |
+| Variant | Theme name | Editor background | UI background |
+|---|---|---|---|
+| Benom | `Benom` | `#1a1a1a` (10% lighter than the source's pure black) | `#050505` (2% lighter than `#000000`) |
+| Benom Alt | `Benom Alt` | `#1e1614` (8% darker than the source's `alt_bg`) | `#140e0d` (40% darker than `#211816`) |
 
 Goal: a dark theme that is genuinely good for long coding sessions, and a package that can be published to
 the VS Code Marketplace (and Open VSX) with one tag push.

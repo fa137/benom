@@ -15,10 +15,15 @@ faithful to Venom while making every role readable.
 
 ## Variants
 
-The base variant uses `editor.background` `#000000`; the alt variant
-uses `#211816` (the source's `alt_bg`). Every color is derived per
-variant from that variant's background, so nothing is invisible on the
-brown background.
+Each variant has two backgrounds. The editor-area background is
+shifted from the original Venom background: `#1a1a1a` on base
+(10% lighter than `#000000`), `#1e1614` on alt (8% darker than
+`#211816`, the source's `alt_bg`). The UI chrome (sideBar, panel,
+terminal, title bar, status bar, widgets, inputs, dropdowns, menus,
+notifications) is shifted the same way (2% lighter on base, 40%
+darker on alt): `#050505` on base, `#140e0d` on alt. Every other
+color is derived per variant from the background the role sits on,
+so nothing is invisible on the brown background.
 
 ## Color classes
 
@@ -34,20 +39,22 @@ Each workbench key has a class that says how its color is derived
   find match, widget and section header backgrounds, list
   selection/hover/focus, scrollbar sliders, button surfaces, peek
   and merge backgrounds. NEVER lifted by text contrast. Derived as
-  mix(variantBackground, foreground, t) with t per role (see the
-  generated table). Gate: vs its variant background between 1.0:1
-  and 2.0:1, and editor.foreground on it at least 4.5:1.
+  mix(background, foreground, t) with t per role (see the generated
+  table), where background is the editor-area background for editor
+  roles and the UI background for UI roles. Gate: vs its background
+  between 1.0:1 and 2.0:1, and editor.foreground on it at least 4.5:1.
 - **line** — borders, indent guides, rulers, whitespace dots, tree
-  indent stroke. Derived as mix(variantBackground, foreground, t).
-  Gate: vs its variant background between 1.0:1 and 3.0:1.
+  indent stroke. Derived as mix(background, foreground, t), same
+  background split. Gate: vs its background between 1.0:1 and 3.0:1.
 - **chrome** — activity bar, title bar, status bar. Derived as
-  mix(variantBackground, #000000, 0.25). On the base variant this
-  is still #000000; on the alt variant it is #191211, so the
-  chrome is a step darker than the brown editor instead of pure
-  black beside it.
-- **area** — large areas (editor, sidebar, panel, terminal,
-  inactive tab, widgets, active tab, breadcrumbs). The variant
-  background itself.
+  mix(uiBackground, #000000, 0.25). On the base variant this is
+  #040404; on the alt variant it is #0f0b0a, so the chrome is a
+  step darker than the brown UI instead of pure black beside it.
+- **area** — large areas. Editor-only areas (editor canvas, gutter,
+  empty editor group, active tab, breadcrumbs, peek editor, inlay
+  hints, diff diagonal fill) use the 5%-shifted editor background;
+  every other area (sidebar, panel, terminal, inactive tabs,
+  widgets) use the UI background.
 - **accent** — colored accents (red/teal borders, badges, diff
   markers, terminal ANSI). The palette color, used as-is for
   fidelity; not gated by contrast.
@@ -59,17 +66,21 @@ that lifting them to a text-contrast target produced. The smallest
 steps land just above 1.0:1 on the pure-black base variant because
 black has zero luminance; that is the first visible step above the
 background and is still far below the 3.0:1 loudness threshold.
-The base variant uses t=0.09 for the line highlight (about #111111):
-the default t=0.05 yields #0a0a0a, which is invisible on black.
+The base variant uses t=0.09 for the line highlight (about #292929 on
+the #1a1a1a editor background): the default t=0.05 yields #222222,
+which is nearly invisible on it.
 The alt variant keeps t=0.05 for the line highlight.
 
-## Alt variant layout
+## Variant layout
 
-The editor and every large area (sideBar, panel, terminal,
-tab.inactive, widgets) use #211816. The activityBar, titleBar and
-statusBar use mix(#211816, #000000, 0.25) = #191211. The active
-tab and breadcrumbs use the editor color. The base variant keeps
-#000000 everywhere and separates areas with line-class borders.
+The editor canvas and editor-only areas (gutter, empty editor group,
+active tab, breadcrumbs, peek editor, inlay hints, diff diagonal fill)
+use the shifted editor background (#1a1a1a base, #1e1614 alt).
+The sideBar, panel, terminal, inactive tabs and widgets use the UI
+background, shifted the same way (2% lighter on base, 40% darker on
+alt: #050505 base, #140e0d alt). The activityBar, titleBar and
+statusBar use mix(uiBackground, #000000, 0.25): #040404 on base,
+#0f0b0a on alt.
 
 ## Font style separation
 
@@ -144,48 +155,60 @@ lighter shade of the same hue.
 
 | Role | Variant | Before | After | Contrast ratio |
 |---|---|---|---|---|
-| editorLineNumber.foreground | base | #505050 | #5a5a5a | 3.04:1 |
-| editorInlayHint.foreground | base | #505050 | #5a5a5a | 3.04:1 |
-| activityBar.inactiveForeground | base | #505050 | #5a5a5a | 3.04:1 |
-| titleBar.inactiveForeground | base | #505050 | #5a5a5a | 3.04:1 |
-| statusBar.noFolderForeground | base | #505050 | #5a5a5a | 3.04:1 |
-| tab.inactiveForeground | base | #505050 | #5a5a5a | 3.04:1 |
-| tab.unfocusedActiveForeground | base | #505050 | #5a5a5a | 3.04:1 |
-| tab.unfocusedInactiveForeground | base | #505050 | #5a5a5a | 3.04:1 |
-| panelTitle.inactiveForeground | base | #505050 | #5a5a5a | 3.04:1 |
-| input.placeholderForeground | base | #505050 | #5a5a5a | 3.04:1 |
-| gitDecoration.ignoredResourceForeground | base | #505050 | #5a5a5a | 3.04:1 |
-| debugIcon.breakpointDisabledForeground | base | #505050 | #5a5a5a | 3.04:1 |
-| descriptionForeground | base | #505050 | #5a5a5a | 3.04:1 |
-| comment | base | #505050 | #6f6f6f | 4.18:1 |
-| semantic:comment | base | #505050 | #6f6f6f | 4.18:1 |
-| editorLineNumber.foreground | alt | #505050 | #676767 | 3.08:1 |
-| editorBracketHighlight.foreground3 | alt | #5f8787 | #618a8a | 4.57:1 |
-| editorInlayHint.foreground | alt | #505050 | #676767 | 3.08:1 |
-| editorInfo.foreground | alt | #5f8787 | #618a8a | 4.57:1 |
-| problemsInfoIcon.foreground | alt | #5f8787 | #618a8a | 4.57:1 |
-| activityBar.inactiveForeground | alt | #505050 | #676767 | 3.08:1 |
-| titleBar.inactiveForeground | alt | #505050 | #676767 | 3.08:1 |
-| statusBar.noFolderForeground | alt | #505050 | #676767 | 3.08:1 |
-| tab.inactiveForeground | alt | #505050 | #676767 | 3.08:1 |
-| tab.unfocusedActiveForeground | alt | #505050 | #676767 | 3.08:1 |
-| tab.unfocusedInactiveForeground | alt | #505050 | #676767 | 3.08:1 |
-| panelTitle.inactiveForeground | alt | #505050 | #676767 | 3.08:1 |
-| input.placeholderForeground | alt | #505050 | #676767 | 3.08:1 |
-| gitDecoration.ignoredResourceForeground | alt | #505050 | #676767 | 3.08:1 |
-| gitDecoration.submoduleResourceForeground | alt | #5f8787 | #618a8a | 4.57:1 |
-| notificationsInfoIcon.foreground | alt | #5f8787 | #618a8a | 4.57:1 |
-| debugIcon.breakpointDisabledForeground | alt | #505050 | #676767 | 3.08:1 |
-| descriptionForeground | alt | #505050 | #676767 | 3.08:1 |
-| comment | alt | #505050 | #7b7b7b | 4.11:1 |
-| decorator | alt | #5f8787 | #618a8a | 4.57:1 |
-| macro | alt | #5f8787 | #618a8a | 4.57:1 |
-| attribute | alt | #5f8787 | #618a8a | 4.57:1 |
-| cssProperty | alt | #5f8787 | #618a8a | 4.57:1 |
-| jsonKey | alt | #5f8787 | #618a8a | 4.57:1 |
-| semantic:decorator | alt | #5f8787 | #618a8a | 4.57:1 |
-| semantic:macro | alt | #5f8787 | #618a8a | 4.57:1 |
-| semantic:comment | alt | #505050 | #7b7b7b | 4.11:1 |
+| editorLineNumber.foreground | base | #505050 | #676767 | 3.08:1 |
+| editorBracketHighlight.foreground3 | base | #5f8787 | #618a8a | 4.57:1 |
+| editorInlayHint.foreground | base | #505050 | #676767 | 3.08:1 |
+| editorInfo.foreground | base | #5f8787 | #618a8a | 4.57:1 |
+| problemsInfoIcon.foreground | base | #5f8787 | #618a8a | 4.57:1 |
+| activityBar.inactiveForeground | base | #505050 | #676767 | 3.08:1 |
+| titleBar.inactiveForeground | base | #505050 | #676767 | 3.08:1 |
+| statusBar.noFolderForeground | base | #505050 | #676767 | 3.08:1 |
+| tab.inactiveForeground | base | #505050 | #676767 | 3.08:1 |
+| tab.unfocusedActiveForeground | base | #505050 | #676767 | 3.08:1 |
+| tab.unfocusedInactiveForeground | base | #505050 | #676767 | 3.08:1 |
+| panelTitle.inactiveForeground | base | #505050 | #676767 | 3.08:1 |
+| input.placeholderForeground | base | #505050 | #676767 | 3.08:1 |
+| gitDecoration.ignoredResourceForeground | base | #505050 | #676767 | 3.08:1 |
+| gitDecoration.submoduleResourceForeground | base | #5f8787 | #618a8a | 4.57:1 |
+| notificationsInfoIcon.foreground | base | #5f8787 | #618a8a | 4.57:1 |
+| debugIcon.breakpointDisabledForeground | base | #505050 | #676767 | 3.08:1 |
+| descriptionForeground | base | #505050 | #676767 | 3.08:1 |
+| comment | base | #505050 | #7b7b7b | 4.11:1 |
+| decorator | base | #5f8787 | #618a8a | 4.57:1 |
+| macro | base | #5f8787 | #618a8a | 4.57:1 |
+| attribute | base | #5f8787 | #618a8a | 4.57:1 |
+| cssProperty | base | #5f8787 | #618a8a | 4.57:1 |
+| jsonKey | base | #5f8787 | #618a8a | 4.57:1 |
+| semantic:decorator | base | #5f8787 | #618a8a | 4.57:1 |
+| semantic:macro | base | #5f8787 | #618a8a | 4.57:1 |
+| semantic:comment | base | #505050 | #7b7b7b | 4.11:1 |
+| editorLineNumber.foreground | alt | #505050 | #646464 | 3.01:1 |
+| editorBracketHighlight.foreground3 | alt | #5f8787 | #618a8a | 4.67:1 |
+| editorInlayHint.foreground | alt | #505050 | #646464 | 3.01:1 |
+| editorInfo.foreground | alt | #5f8787 | #618a8a | 4.67:1 |
+| problemsInfoIcon.foreground | alt | #5f8787 | #618a8a | 4.67:1 |
+| activityBar.inactiveForeground | alt | #505050 | #646464 | 3.01:1 |
+| titleBar.inactiveForeground | alt | #505050 | #646464 | 3.01:1 |
+| statusBar.noFolderForeground | alt | #505050 | #646464 | 3.01:1 |
+| tab.inactiveForeground | alt | #505050 | #646464 | 3.01:1 |
+| tab.unfocusedActiveForeground | alt | #505050 | #646464 | 3.01:1 |
+| tab.unfocusedInactiveForeground | alt | #505050 | #646464 | 3.01:1 |
+| panelTitle.inactiveForeground | alt | #505050 | #646464 | 3.01:1 |
+| input.placeholderForeground | alt | #505050 | #646464 | 3.01:1 |
+| gitDecoration.ignoredResourceForeground | alt | #505050 | #646464 | 3.01:1 |
+| gitDecoration.submoduleResourceForeground | alt | #5f8787 | #618a8a | 4.67:1 |
+| notificationsInfoIcon.foreground | alt | #5f8787 | #618a8a | 4.67:1 |
+| debugIcon.breakpointDisabledForeground | alt | #505050 | #646464 | 3.01:1 |
+| descriptionForeground | alt | #505050 | #646464 | 3.01:1 |
+| comment | alt | #505050 | #797979 | 4.09:1 |
+| decorator | alt | #5f8787 | #618a8a | 4.67:1 |
+| macro | alt | #5f8787 | #618a8a | 4.67:1 |
+| attribute | alt | #5f8787 | #618a8a | 4.67:1 |
+| cssProperty | alt | #5f8787 | #618a8a | 4.67:1 |
+| jsonKey | alt | #5f8787 | #618a8a | 4.67:1 |
+| semantic:decorator | alt | #5f8787 | #618a8a | 4.67:1 |
+| semantic:macro | alt | #5f8787 | #618a8a | 4.67:1 |
+| semantic:comment | alt | #505050 | #797979 | 4.09:1 |
 
 ## Generated: derived surfaces, lines and chrome
 
@@ -196,209 +219,209 @@ background, and "fg on color" is editor.foreground on that color.
 
 | Role | Class | Variant | t | Color | vs background | fg on color |
 |---|---|---|---|---|---|---|
-| editor.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| editor.lineHighlightBackground | surface | base | 0.09 | #111111 | 1.11:1 | 10.49:1 |
-| editor.lineHighlightBorder | line | base | 0.12 | #171717 | 1.17:1 |  |
-| editorRuler.foreground | line | base | 0.10 | #131313 | 1.13:1 |  |
-| editorOverviewRuler.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| editorGroup.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| editorGroupHeader.tabsBorder | line | base | 0.12 | #171717 | 1.17:1 |  |
-| editorGroupHeader.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| editorBracketMatch.background | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| editorBracketMatch.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| editor.selectionBackground | surface | base | 0.16 | #1f1f1f | 1.27:1 | 9.16:1 |
-| editor.inactiveSelectionBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| editor.findMatchBackground | surface | base | 0.22 | #2a2a2a | 1.46:1 | 7.97:1 |
-| editor.findMatchHighlightBackground | surface | base | 0.12 | #171717 | 1.17:1 | 9.96:1 |
-| editor.wordHighlightBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| editor.wordHighlightStrongBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| editorWhitespace.foreground | line | base | 0.18 | #232323 | 1.34:1 |  |
-| editorIndentGuide.background | line | base | 0.08 | #0f0f0f | 1.10:1 |  |
-| editorIndentGuide.activeBackground | line | base | 0.25 | #303030 | 1.59:1 |  |
-| editor.foldBackground | surface | base | 0.07 | #0e0e0e | 1.09:1 | 10.72:1 |
-| editor.rangeHighlightBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| editor.findRangeHighlightBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| editor.hoverHighlightBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| editor.linkedEditingBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| editor.snippetTabstopHighlightBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| editor.snippetFinalTabstopHighlightBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| editorWidget.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| editorHoverWidget.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| editorSuggestWidget.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| editorSuggestWidget.selectedBackground | surface | base | 0.07 | #0e0e0e | 1.09:1 | 10.72:1 |
-| editorError.background | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| editorWarning.background | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| editorInfo.background | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| sideBar.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| sideBarSectionHeader.background | surface | base | 0.06 | #0c0c0c | 1.07:1 | 10.87:1 |
-| sideBar.dropBackground | surface | base | 0.07 | #0e0e0e | 1.09:1 | 10.72:1 |
-| activityBar.background | chrome | base | 0.25 | #000000 | 1.00:1 |  |
-| titleBar.activeBackground | chrome | base | 0.25 | #000000 | 1.00:1 |  |
-| titleBar.inactiveBackground | chrome | base | 0.25 | #000000 | 1.00:1 |  |
-| statusBar.background | chrome | base | 0.25 | #000000 | 1.00:1 |  |
-| statusBar.noFolderBackground | chrome | base | 0.25 | #000000 | 1.00:1 |  |
-| statusBar.debuggingBackground | chrome | base | 0.25 | #000000 | 1.00:1 |  |
-| statusBarItem.activeBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| statusBarItem.hoverBackground | surface | base | 0.07 | #0e0e0e | 1.09:1 | 10.72:1 |
-| statusBarItem.focusBorder | line | base | 0.12 | #171717 | 1.17:1 |  |
-| tab.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| tab.activeBorder | line | base | 0.12 | #171717 | 1.17:1 |  |
-| panel.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| input.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| dropdown.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| list.activeSelectionBackground | surface | base | 0.14 | #1b1b1b | 1.22:1 | 9.57:1 |
-| list.inactiveSelectionBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| list.hoverBackground | surface | base | 0.07 | #0e0e0e | 1.09:1 | 10.72:1 |
-| list.focusBackground | surface | base | 0.07 | #0e0e0e | 1.09:1 | 10.72:1 |
-| list.dropBackground | surface | base | 0.07 | #0e0e0e | 1.09:1 | 10.72:1 |
-| tree.indentGuidesStroke | line | base | 0.10 | #131313 | 1.13:1 |  |
-| button.background | surface | base | 0.14 | #1b1b1b | 1.22:1 | 9.57:1 |
-| button.hoverBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| button.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| checkbox.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| checkbox.selectBackground | surface | base | 0.14 | #1b1b1b | 1.22:1 | 9.57:1 |
-| checkbox.selectBorder | line | base | 0.12 | #171717 | 1.17:1 |  |
-| radio.inactiveBorder | line | base | 0.12 | #171717 | 1.17:1 |  |
-| radio.activeBackground | surface | base | 0.14 | #1b1b1b | 1.22:1 | 9.57:1 |
-| radio.activeBorder | line | base | 0.12 | #171717 | 1.17:1 |  |
-| scrollbarSlider.background | surface | base | 0.12 | #171717 | 1.17:1 | 9.96:1 |
-| scrollbarSlider.hoverBackground | surface | base | 0.18 | #232323 | 1.34:1 | 8.73:1 |
-| scrollbarSlider.activeBackground | surface | base | 0.26 | #323232 | 1.64:1 | 7.12:1 |
-| minimap.findMatchHighlight | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| minimap.selectionHighlight | surface | base | 0.16 | #1f1f1f | 1.27:1 | 9.16:1 |
-| minimap.errorHighlight | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| minimap.warningHighlight | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| minimap.infoHighlight | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| peekViewResult.background | surface | base | 0.07 | #0e0e0e | 1.09:1 | 10.72:1 |
-| peekViewResult.matchHighlightBackground | surface | base | 0.12 | #171717 | 1.17:1 | 9.96:1 |
-| peekViewResult.selectionBackground | surface | base | 0.14 | #1b1b1b | 1.22:1 | 9.57:1 |
-| peekViewTitle.background | surface | base | 0.07 | #0e0e0e | 1.09:1 | 10.72:1 |
-| merge.currentHeaderBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| merge.currentContentBackground | surface | base | 0.07 | #0e0e0e | 1.09:1 | 10.72:1 |
-| merge.incomingHeaderBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| merge.incomingContentBackground | surface | base | 0.07 | #0e0e0e | 1.09:1 | 10.72:1 |
-| merge.commonHeaderBackground | surface | base | 0.10 | #131313 | 1.13:1 | 10.32:1 |
-| merge.commonContentBackground | surface | base | 0.07 | #0e0e0e | 1.09:1 | 10.72:1 |
-| merge.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| editorOverviewRuler.findMatchForeground | surface | base | 0.22 | #2a2a2a | 1.46:1 | 7.97:1 |
-| editorOverviewRuler.selectionHighlightForeground | surface | base | 0.16 | #1f1f1f | 1.27:1 | 9.16:1 |
-| diffEditor.insertedTextBorder | line | base | 0.12 | #171717 | 1.17:1 |  |
-| diffEditor.removedTextBorder | line | base | 0.12 | #171717 | 1.17:1 |  |
-| diffEditor.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| notifications.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| menu.selectionBackground | surface | base | 0.14 | #1b1b1b | 1.22:1 | 9.57:1 |
-| menu.separatorBackground | line | base | 0.12 | #171717 | 1.17:1 |  |
-| menu.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| widget.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| toolbar.hoverBackground | surface | base | 0.07 | #0e0e0e | 1.09:1 | 10.72:1 |
-| debugToolBar.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| agentsChatInput.border | line | base | 0.12 | #171717 | 1.17:1 |  |
-| chat.requestBackground | surface | base | 0.07 | #0e0e0e | 1.09:1 | 10.72:1 |
-| chat.requestBorder | line | base | 0.12 | #171717 | 1.17:1 |  |
-| focusBorder | line | base | 0.12 | #171717 | 1.17:1 |  |
-| contrastBorder | line | base | 0.12 | #171717 | 1.17:1 |  |
-| selection.background | surface | base | 0.16 | #1f1f1f | 1.27:1 | 9.16:1 |
-| editor.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| editor.lineHighlightBackground | surface | alt | 0.05 | #29201f | 1.09:1 | 8.83:1 |
-| editor.lineHighlightBorder | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| editorRuler.foreground | line | alt | 0.10 | #312927 | 1.22:1 |  |
-| editorOverviewRuler.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| editorGroup.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| editorGroupHeader.tabsBorder | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| editorGroupHeader.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| editorBracketMatch.background | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| editorBracketMatch.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| editor.selectionBackground | surface | alt | 0.16 | #3b3331 | 1.41:1 | 6.85:1 |
-| editor.inactiveSelectionBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| editor.findMatchBackground | surface | alt | 0.22 | #443d3c | 1.64:1 | 5.90:1 |
-| editor.findMatchHighlightBackground | surface | alt | 0.12 | #342c2b | 1.28:1 | 7.57:1 |
-| editor.wordHighlightBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| editor.wordHighlightStrongBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| editorWhitespace.foreground | line | alt | 0.18 | #3e3635 | 1.48:1 |  |
-| editorIndentGuide.background | line | alt | 0.08 | #2e2624 | 1.18:1 |  |
-| editorIndentGuide.activeBackground | line | alt | 0.25 | #494241 | 1.77:1 |  |
-| editor.foldBackground | surface | alt | 0.07 | #2c2422 | 1.15:1 | 8.44:1 |
-| editor.rangeHighlightBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| editor.findRangeHighlightBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| editor.hoverHighlightBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| editor.linkedEditingBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| editor.snippetTabstopHighlightBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| editor.snippetFinalTabstopHighlightBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| editorWidget.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| editorHoverWidget.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| editorSuggestWidget.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| editorSuggestWidget.selectedBackground | surface | alt | 0.07 | #2c2422 | 1.15:1 | 8.44:1 |
-| editorError.background | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| editorWarning.background | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| editorInfo.background | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| sideBar.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| sideBarSectionHeader.background | surface | alt | 0.06 | #2b2220 | 1.12:1 | 8.63:1 |
-| sideBar.dropBackground | surface | alt | 0.07 | #2c2422 | 1.15:1 | 8.44:1 |
-| activityBar.background | chrome | alt | 0.25 | #191211 | 1.06:1 |  |
-| titleBar.activeBackground | chrome | alt | 0.25 | #191211 | 1.06:1 |  |
-| titleBar.inactiveBackground | chrome | alt | 0.25 | #191211 | 1.06:1 |  |
-| statusBar.background | chrome | alt | 0.25 | #191211 | 1.06:1 |  |
-| statusBar.noFolderBackground | chrome | alt | 0.25 | #191211 | 1.06:1 |  |
-| statusBar.debuggingBackground | chrome | alt | 0.25 | #191211 | 1.06:1 |  |
-| statusBarItem.activeBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| statusBarItem.hoverBackground | surface | alt | 0.07 | #2c2422 | 1.15:1 | 8.44:1 |
-| statusBarItem.focusBorder | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| tab.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| tab.activeBorder | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| panel.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| input.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| dropdown.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| list.activeSelectionBackground | surface | alt | 0.14 | #37302e | 1.35:1 | 7.18:1 |
-| list.inactiveSelectionBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| list.hoverBackground | surface | alt | 0.07 | #2c2422 | 1.15:1 | 8.44:1 |
-| list.focusBackground | surface | alt | 0.07 | #2c2422 | 1.15:1 | 8.44:1 |
-| list.dropBackground | surface | alt | 0.07 | #2c2422 | 1.15:1 | 8.44:1 |
-| tree.indentGuidesStroke | line | alt | 0.10 | #312927 | 1.22:1 |  |
-| button.background | surface | alt | 0.14 | #37302e | 1.35:1 | 7.18:1 |
-| button.hoverBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| button.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| checkbox.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| checkbox.selectBackground | surface | alt | 0.14 | #37302e | 1.35:1 | 7.18:1 |
-| checkbox.selectBorder | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| radio.inactiveBorder | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| radio.activeBackground | surface | alt | 0.14 | #37302e | 1.35:1 | 7.18:1 |
-| radio.activeBorder | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| scrollbarSlider.background | surface | alt | 0.12 | #342c2b | 1.28:1 | 7.57:1 |
-| scrollbarSlider.hoverBackground | surface | alt | 0.18 | #3e3635 | 1.48:1 | 6.54:1 |
-| scrollbarSlider.activeBackground | surface | alt | 0.26 | #4b4442 | 1.83:1 | 5.29:1 |
-| minimap.findMatchHighlight | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| minimap.selectionHighlight | surface | alt | 0.16 | #3b3331 | 1.41:1 | 6.85:1 |
-| minimap.errorHighlight | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| minimap.warningHighlight | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| minimap.infoHighlight | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| peekViewResult.background | surface | alt | 0.07 | #2c2422 | 1.15:1 | 8.44:1 |
-| peekViewResult.matchHighlightBackground | surface | alt | 0.12 | #342c2b | 1.28:1 | 7.57:1 |
-| peekViewResult.selectionBackground | surface | alt | 0.14 | #37302e | 1.35:1 | 7.18:1 |
-| peekViewTitle.background | surface | alt | 0.07 | #2c2422 | 1.15:1 | 8.44:1 |
-| merge.currentHeaderBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| merge.currentContentBackground | surface | alt | 0.07 | #2c2422 | 1.15:1 | 8.44:1 |
-| merge.incomingHeaderBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| merge.incomingContentBackground | surface | alt | 0.07 | #2c2422 | 1.15:1 | 8.44:1 |
-| merge.commonHeaderBackground | surface | alt | 0.10 | #312927 | 1.22:1 | 7.90:1 |
-| merge.commonContentBackground | surface | alt | 0.07 | #2c2422 | 1.15:1 | 8.44:1 |
-| merge.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| editorOverviewRuler.findMatchForeground | surface | alt | 0.22 | #443d3c | 1.64:1 | 5.90:1 |
-| editorOverviewRuler.selectionHighlightForeground | surface | alt | 0.16 | #3b3331 | 1.41:1 | 6.85:1 |
-| diffEditor.insertedTextBorder | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| diffEditor.removedTextBorder | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| diffEditor.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| notifications.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| menu.selectionBackground | surface | alt | 0.14 | #37302e | 1.35:1 | 7.18:1 |
-| menu.separatorBackground | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| menu.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| widget.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| toolbar.hoverBackground | surface | alt | 0.07 | #2c2422 | 1.15:1 | 8.44:1 |
-| debugToolBar.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| agentsChatInput.border | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| chat.requestBackground | surface | alt | 0.07 | #2c2422 | 1.15:1 | 8.44:1 |
-| chat.requestBorder | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| focusBorder | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| contrastBorder | line | alt | 0.12 | #342c2b | 1.28:1 |  |
-| selection.background | surface | alt | 0.16 | #3b3331 | 1.41:1 | 6.85:1 |
+| editor.border | line | base | 0.12 | #2e2e2e | 1.28:1 |  |
+| editor.lineHighlightBackground | surface | base | 0.09 | #292929 | 1.20:1 | 8.08:1 |
+| editor.lineHighlightBorder | line | base | 0.12 | #2e2e2e | 1.28:1 |  |
+| editorRuler.foreground | line | base | 0.10 | #181818 | 1.15:1 |  |
+| editorOverviewRuler.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| editorGroup.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| editorGroupHeader.tabsBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| editorGroupHeader.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| editorBracketMatch.background | surface | base | 0.10 | #181818 | 1.15:1 | 9.86:1 |
+| editorBracketMatch.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| editor.selectionBackground | surface | base | 0.16 | #353535 | 1.42:1 | 6.81:1 |
+| editor.inactiveSelectionBackground | surface | base | 0.10 | #2b2b2b | 1.23:1 | 7.87:1 |
+| editor.findMatchBackground | surface | base | 0.22 | #3f3f3f | 1.65:1 | 5.85:1 |
+| editor.findMatchHighlightBackground | surface | base | 0.12 | #2e2e2e | 1.28:1 | 7.54:1 |
+| editor.wordHighlightBackground | surface | base | 0.10 | #2b2b2b | 1.23:1 | 7.87:1 |
+| editor.wordHighlightStrongBackground | surface | base | 0.10 | #2b2b2b | 1.23:1 | 7.87:1 |
+| editorWhitespace.foreground | line | base | 0.18 | #272727 | 1.36:1 |  |
+| editorIndentGuide.background | line | base | 0.08 | #141414 | 1.11:1 |  |
+| editorIndentGuide.activeBackground | line | base | 0.25 | #343434 | 1.64:1 |  |
+| editor.foldBackground | surface | base | 0.07 | #262626 | 1.15:1 | 8.41:1 |
+| editor.rangeHighlightBackground | surface | base | 0.10 | #2b2b2b | 1.23:1 | 7.87:1 |
+| editor.findRangeHighlightBackground | surface | base | 0.10 | #2b2b2b | 1.23:1 | 7.87:1 |
+| editor.hoverHighlightBackground | surface | base | 0.10 | #2b2b2b | 1.23:1 | 7.87:1 |
+| editor.linkedEditingBackground | surface | base | 0.10 | #2b2b2b | 1.23:1 | 7.87:1 |
+| editor.snippetTabstopHighlightBackground | surface | base | 0.10 | #2b2b2b | 1.23:1 | 7.87:1 |
+| editor.snippetFinalTabstopHighlightBackground | surface | base | 0.10 | #2b2b2b | 1.23:1 | 7.87:1 |
+| editorWidget.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| editorHoverWidget.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| editorSuggestWidget.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| editorSuggestWidget.selectedBackground | surface | base | 0.07 | #121212 | 1.09:1 | 10.41:1 |
+| editorError.background | surface | base | 0.10 | #181818 | 1.15:1 | 9.86:1 |
+| editorWarning.background | surface | base | 0.10 | #181818 | 1.15:1 | 9.86:1 |
+| editorInfo.background | surface | base | 0.10 | #181818 | 1.15:1 | 9.86:1 |
+| sideBar.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| sideBarSectionHeader.background | surface | base | 0.06 | #101010 | 1.07:1 | 10.57:1 |
+| sideBar.dropBackground | surface | base | 0.07 | #121212 | 1.09:1 | 10.41:1 |
+| activityBar.background | chrome | base | 0.25 | #040404 | 1.01:1 |  |
+| titleBar.activeBackground | chrome | base | 0.25 | #040404 | 1.01:1 |  |
+| titleBar.inactiveBackground | chrome | base | 0.25 | #040404 | 1.01:1 |  |
+| statusBar.background | chrome | base | 0.25 | #040404 | 1.01:1 |  |
+| statusBar.noFolderBackground | chrome | base | 0.25 | #040404 | 1.01:1 |  |
+| statusBar.debuggingBackground | chrome | base | 0.25 | #040404 | 1.01:1 |  |
+| statusBarItem.activeBackground | surface | base | 0.10 | #181818 | 1.15:1 | 9.86:1 |
+| statusBarItem.hoverBackground | surface | base | 0.07 | #121212 | 1.09:1 | 10.41:1 |
+| statusBarItem.focusBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| tab.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| tab.activeBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| panel.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| input.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| dropdown.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| list.activeSelectionBackground | surface | base | 0.14 | #1f1f1f | 1.24:1 | 9.16:1 |
+| list.inactiveSelectionBackground | surface | base | 0.10 | #181818 | 1.15:1 | 9.86:1 |
+| list.hoverBackground | surface | base | 0.07 | #121212 | 1.09:1 | 10.41:1 |
+| list.focusBackground | surface | base | 0.07 | #121212 | 1.09:1 | 10.41:1 |
+| list.dropBackground | surface | base | 0.07 | #121212 | 1.09:1 | 10.41:1 |
+| tree.indentGuidesStroke | line | base | 0.10 | #181818 | 1.15:1 |  |
+| button.background | surface | base | 0.14 | #1f1f1f | 1.24:1 | 9.16:1 |
+| button.hoverBackground | surface | base | 0.10 | #181818 | 1.15:1 | 9.86:1 |
+| button.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| checkbox.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| checkbox.selectBackground | surface | base | 0.14 | #1f1f1f | 1.24:1 | 9.16:1 |
+| checkbox.selectBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| radio.inactiveBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| radio.activeBackground | surface | base | 0.14 | #1f1f1f | 1.24:1 | 9.16:1 |
+| radio.activeBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| scrollbarSlider.background | surface | base | 0.12 | #1c1c1c | 1.20:1 | 9.47:1 |
+| scrollbarSlider.hoverBackground | surface | base | 0.18 | #272727 | 1.36:1 | 8.30:1 |
+| scrollbarSlider.activeBackground | surface | base | 0.26 | #363636 | 1.69:1 | 6.71:1 |
+| minimap.findMatchHighlight | surface | base | 0.10 | #181818 | 1.15:1 | 9.86:1 |
+| minimap.selectionHighlight | surface | base | 0.16 | #232323 | 1.30:1 | 8.73:1 |
+| minimap.errorHighlight | surface | base | 0.10 | #181818 | 1.15:1 | 9.86:1 |
+| minimap.warningHighlight | surface | base | 0.10 | #181818 | 1.15:1 | 9.86:1 |
+| minimap.infoHighlight | surface | base | 0.10 | #181818 | 1.15:1 | 9.86:1 |
+| peekViewResult.background | surface | base | 0.07 | #121212 | 1.09:1 | 10.41:1 |
+| peekViewResult.matchHighlightBackground | surface | base | 0.12 | #1c1c1c | 1.20:1 | 9.47:1 |
+| peekViewResult.selectionBackground | surface | base | 0.14 | #1f1f1f | 1.24:1 | 9.16:1 |
+| peekViewTitle.background | surface | base | 0.07 | #121212 | 1.09:1 | 10.41:1 |
+| merge.currentHeaderBackground | surface | base | 0.10 | #181818 | 1.15:1 | 9.86:1 |
+| merge.currentContentBackground | surface | base | 0.07 | #121212 | 1.09:1 | 10.41:1 |
+| merge.incomingHeaderBackground | surface | base | 0.10 | #181818 | 1.15:1 | 9.86:1 |
+| merge.incomingContentBackground | surface | base | 0.07 | #121212 | 1.09:1 | 10.41:1 |
+| merge.commonHeaderBackground | surface | base | 0.10 | #181818 | 1.15:1 | 9.86:1 |
+| merge.commonContentBackground | surface | base | 0.07 | #121212 | 1.09:1 | 10.41:1 |
+| merge.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| editorOverviewRuler.findMatchForeground | surface | base | 0.22 | #2e2e2e | 1.50:1 | 7.54:1 |
+| editorOverviewRuler.selectionHighlightForeground | surface | base | 0.16 | #232323 | 1.30:1 | 8.73:1 |
+| diffEditor.insertedTextBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| diffEditor.removedTextBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| diffEditor.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| notifications.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| menu.selectionBackground | surface | base | 0.14 | #1f1f1f | 1.24:1 | 9.16:1 |
+| menu.separatorBackground | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| menu.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| widget.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| toolbar.hoverBackground | surface | base | 0.07 | #121212 | 1.09:1 | 10.41:1 |
+| debugToolBar.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| agentsChatInput.border | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| chat.requestBackground | surface | base | 0.07 | #121212 | 1.09:1 | 10.41:1 |
+| chat.requestBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| focusBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| contrastBorder | line | base | 0.12 | #1c1c1c | 1.20:1 |  |
+| selection.background | surface | base | 0.16 | #232323 | 1.30:1 | 8.73:1 |
+| editor.border | line | alt | 0.12 | #322b29 | 1.28:1 |  |
+| editor.lineHighlightBackground | surface | alt | 0.05 | #261f1d | 1.10:1 | 9.00:1 |
+| editor.lineHighlightBorder | line | alt | 0.12 | #322b29 | 1.28:1 |  |
+| editorRuler.foreground | line | alt | 0.10 | #25201f | 1.19:1 |  |
+| editorOverviewRuler.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| editorGroup.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| editorGroupHeader.tabsBorder | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| editorGroupHeader.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| editorBracketMatch.background | surface | alt | 0.10 | #25201f | 1.19:1 | 8.94:1 |
+| editorBracketMatch.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| editor.selectionBackground | surface | alt | 0.16 | #383130 | 1.40:1 | 7.07:1 |
+| editor.inactiveSelectionBackground | surface | alt | 0.10 | #2e2725 | 1.21:1 | 8.14:1 |
+| editor.findMatchBackground | surface | alt | 0.22 | #423c3a | 1.64:1 | 6.02:1 |
+| editor.findMatchHighlightBackground | surface | alt | 0.12 | #322b29 | 1.28:1 | 7.71:1 |
+| editor.wordHighlightBackground | surface | alt | 0.10 | #2e2725 | 1.21:1 | 8.14:1 |
+| editor.wordHighlightStrongBackground | surface | alt | 0.10 | #2e2725 | 1.21:1 | 8.14:1 |
+| editorWhitespace.foreground | line | alt | 0.18 | #332e2d | 1.43:1 |  |
+| editorIndentGuide.background | line | alt | 0.08 | #221c1b | 1.14:1 |  |
+| editorIndentGuide.activeBackground | line | alt | 0.25 | #3f3b3a | 1.73:1 |  |
+| editor.foldBackground | surface | alt | 0.07 | #292220 | 1.14:1 | 8.68:1 |
+| editor.rangeHighlightBackground | surface | alt | 0.10 | #2e2725 | 1.21:1 | 8.14:1 |
+| editor.findRangeHighlightBackground | surface | alt | 0.10 | #2e2725 | 1.21:1 | 8.14:1 |
+| editor.hoverHighlightBackground | surface | alt | 0.10 | #2e2725 | 1.21:1 | 8.14:1 |
+| editor.linkedEditingBackground | surface | alt | 0.10 | #2e2725 | 1.21:1 | 8.14:1 |
+| editor.snippetTabstopHighlightBackground | surface | alt | 0.10 | #2e2725 | 1.21:1 | 8.14:1 |
+| editor.snippetFinalTabstopHighlightBackground | surface | alt | 0.10 | #2e2725 | 1.21:1 | 8.14:1 |
+| editorWidget.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| editorHoverWidget.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| editorSuggestWidget.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| editorSuggestWidget.selectedBackground | surface | alt | 0.07 | #201b1a | 1.12:1 | 9.46:1 |
+| editorError.background | surface | alt | 0.10 | #25201f | 1.19:1 | 8.94:1 |
+| editorWarning.background | surface | alt | 0.10 | #25201f | 1.19:1 | 8.94:1 |
+| editorInfo.background | surface | alt | 0.10 | #25201f | 1.19:1 | 8.94:1 |
+| sideBar.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| sideBarSectionHeader.background | surface | alt | 0.06 | #1e1918 | 1.10:1 | 9.66:1 |
+| sideBar.dropBackground | surface | alt | 0.07 | #201b1a | 1.12:1 | 9.46:1 |
+| activityBar.background | chrome | alt | 0.25 | #0f0b0a | 1.02:1 |  |
+| titleBar.activeBackground | chrome | alt | 0.25 | #0f0b0a | 1.02:1 |  |
+| titleBar.inactiveBackground | chrome | alt | 0.25 | #0f0b0a | 1.02:1 |  |
+| statusBar.background | chrome | alt | 0.25 | #0f0b0a | 1.02:1 |  |
+| statusBar.noFolderBackground | chrome | alt | 0.25 | #0f0b0a | 1.02:1 |  |
+| statusBar.debuggingBackground | chrome | alt | 0.25 | #0f0b0a | 1.02:1 |  |
+| statusBarItem.activeBackground | surface | alt | 0.10 | #25201f | 1.19:1 | 8.94:1 |
+| statusBarItem.hoverBackground | surface | alt | 0.07 | #201b1a | 1.12:1 | 9.46:1 |
+| statusBarItem.focusBorder | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| tab.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| tab.activeBorder | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| panel.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| input.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| dropdown.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| list.activeSelectionBackground | surface | alt | 0.14 | #2c2726 | 1.30:1 | 8.18:1 |
+| list.inactiveSelectionBackground | surface | alt | 0.10 | #25201f | 1.19:1 | 8.94:1 |
+| list.hoverBackground | surface | alt | 0.07 | #201b1a | 1.12:1 | 9.46:1 |
+| list.focusBackground | surface | alt | 0.07 | #201b1a | 1.12:1 | 9.46:1 |
+| list.dropBackground | surface | alt | 0.07 | #201b1a | 1.12:1 | 9.46:1 |
+| tree.indentGuidesStroke | line | alt | 0.10 | #25201f | 1.19:1 |  |
+| button.background | surface | alt | 0.14 | #2c2726 | 1.30:1 | 8.18:1 |
+| button.hoverBackground | surface | alt | 0.10 | #25201f | 1.19:1 | 8.94:1 |
+| button.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| checkbox.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| checkbox.selectBackground | surface | alt | 0.14 | #2c2726 | 1.30:1 | 8.18:1 |
+| checkbox.selectBorder | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| radio.inactiveBorder | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| radio.activeBackground | surface | alt | 0.14 | #2c2726 | 1.30:1 | 8.18:1 |
+| radio.activeBorder | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| scrollbarSlider.background | surface | alt | 0.12 | #292323 | 1.24:1 | 8.58:1 |
+| scrollbarSlider.hoverBackground | surface | alt | 0.18 | #332e2d | 1.43:1 | 7.43:1 |
+| scrollbarSlider.activeBackground | surface | alt | 0.26 | #413d3c | 1.78:1 | 5.96:1 |
+| minimap.findMatchHighlight | surface | alt | 0.10 | #25201f | 1.19:1 | 8.94:1 |
+| minimap.selectionHighlight | surface | alt | 0.16 | #302b2a | 1.37:1 | 7.75:1 |
+| minimap.errorHighlight | surface | alt | 0.10 | #25201f | 1.19:1 | 8.94:1 |
+| minimap.warningHighlight | surface | alt | 0.10 | #25201f | 1.19:1 | 8.94:1 |
+| minimap.infoHighlight | surface | alt | 0.10 | #25201f | 1.19:1 | 8.94:1 |
+| peekViewResult.background | surface | alt | 0.07 | #201b1a | 1.12:1 | 9.46:1 |
+| peekViewResult.matchHighlightBackground | surface | alt | 0.12 | #292323 | 1.24:1 | 8.58:1 |
+| peekViewResult.selectionBackground | surface | alt | 0.14 | #2c2726 | 1.30:1 | 8.18:1 |
+| peekViewTitle.background | surface | alt | 0.07 | #201b1a | 1.12:1 | 9.46:1 |
+| merge.currentHeaderBackground | surface | alt | 0.10 | #25201f | 1.19:1 | 8.94:1 |
+| merge.currentContentBackground | surface | alt | 0.07 | #201b1a | 1.12:1 | 9.46:1 |
+| merge.incomingHeaderBackground | surface | alt | 0.10 | #25201f | 1.19:1 | 8.94:1 |
+| merge.incomingContentBackground | surface | alt | 0.07 | #201b1a | 1.12:1 | 9.46:1 |
+| merge.commonHeaderBackground | surface | alt | 0.10 | #25201f | 1.19:1 | 8.94:1 |
+| merge.commonContentBackground | surface | alt | 0.07 | #201b1a | 1.12:1 | 9.46:1 |
+| merge.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| editorOverviewRuler.findMatchForeground | surface | alt | 0.22 | #3a3535 | 1.58:1 | 6.70:1 |
+| editorOverviewRuler.selectionHighlightForeground | surface | alt | 0.16 | #302b2a | 1.37:1 | 7.75:1 |
+| diffEditor.insertedTextBorder | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| diffEditor.removedTextBorder | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| diffEditor.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| notifications.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| menu.selectionBackground | surface | alt | 0.14 | #2c2726 | 1.30:1 | 8.18:1 |
+| menu.separatorBackground | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| menu.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| widget.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| toolbar.hoverBackground | surface | alt | 0.07 | #201b1a | 1.12:1 | 9.46:1 |
+| debugToolBar.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| agentsChatInput.border | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| chat.requestBackground | surface | alt | 0.07 | #201b1a | 1.12:1 | 9.46:1 |
+| chat.requestBorder | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| focusBorder | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| contrastBorder | line | alt | 0.12 | #292323 | 1.24:1 |  |
+| selection.background | surface | alt | 0.16 | #302b2a | 1.37:1 | 7.75:1 |
 
 <!-- benom:generated:end -->

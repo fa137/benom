@@ -40,12 +40,14 @@ for (const file of ['themes/benom-color-theme.json', 'themes/benom-alt-color-the
   });
 }
 
-test('gate1: base theme editor.background is #000000', () => {
+test('gate1: base theme editor.background is #1a1a1a (10% lighter than the original #000000)', () => {
   const theme = JSON.parse(readFileSync(join(root, 'themes/benom-color-theme.json'), 'utf8'));
-  assert.equal(theme.colors['editor.background'], '#000000');
+  assert.equal(theme.colors['editor.background'], '#1a1a1a');
+  assert.equal(theme.colors['sideBar.background'], '#050505');
 });
 
-test('gate1: alt theme editor.background is #211816', () => {
+test('gate1: alt theme editor.background is #1e1614 (8% darker than the original #211816)', () => {
   const theme = JSON.parse(readFileSync(join(root, 'themes/benom-alt-color-theme.json'), 'utf8'));
-  assert.equal(theme.colors['editor.background'], '#211816');
+  assert.equal(theme.colors['editor.background'], '#1e1614');
+  assert.equal(theme.colors['sideBar.background'], '#140e0d');
 });

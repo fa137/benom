@@ -28,8 +28,8 @@ const palette = JSON.parse(readFileSync(join(root, 'src/palette.json'), 'utf8'))
 const known = new Set(JSON.parse(readFileSync(join(root, 'test/known-colors.json'), 'utf8')).colors);
 
 const VARIANTS = [
-  { file: 'themes/benom-color-theme.json', background: '#000000' },
-  { file: 'themes/benom-alt-color-theme.json', background: '#211816' },
+  { file: 'themes/benom-color-theme.json', background: '#1a1a1a', uiBackground: '#050505' },
+  { file: 'themes/benom-alt-color-theme.json', background: '#1e1614', uiBackground: '#140e0d' },
 ];
 
 // Gate 1: valid JSON and hex.
@@ -57,6 +57,7 @@ for (const v of VARIANTS) {
   walk(theme, '$');
   check(`${v.file} colors are valid hex`, bad.length === 0, bad.join(', '));
   check(`${v.file} editor.background is ${v.background}`, theme.colors['editor.background'] === v.background);
+  check(`${v.file} sideBar.background is ${v.uiBackground}`, theme.colors['sideBar.background'] === v.uiBackground);
 }
 
 // Gate 3: workbench ids are known and unique.

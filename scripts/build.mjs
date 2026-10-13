@@ -4,8 +4,15 @@
 // Reads src/palette.json, src/tokens.mjs and src/workbench.mjs, lifts any color
 // below its contrast target to the nearest lighter shade of the same hue, and
 // writes:
-//   themes/benom-color-theme.json       (base variant, editor.background #000000)
-//   themes/benom-alt-color-theme.json   (alt variant, editor.background #211816)
+//   themes/benom-color-theme.json       (base variant, editor #1a1a1a, UI #050505)
+//   themes/benom-alt-color-theme.json   (alt variant, editor #1e1614, UI #140e0d)
+//
+// Each variant has two backgrounds: the editor-area background, shifted
+// from the original Venom background (10% lighter on base, 8% darker on
+// alt) and used for the editor canvas and editor-only areas (see
+// EDITOR_AREAS), and the UI background, shifted the same way (2% lighter
+// on base, 40% darker on alt) and used for the sidebar, panels, terminal,
+// title bar, status bar, widgets and inputs.
 //   DECISIONS.md                        (generated section between stable markers)
 //
 // The build is deterministic: no timestamps, no randomness, fixed iteration
@@ -128,9 +135,23 @@ export function liftColor(hex, background, target, lighterShades) {
 // ---------------------------------------------------------------------------
 
 const VARIANTS = [
-  { key: 'base', name: 'Benom', background: '#000000' },
-  { key: 'alt', name: 'Benom Alt', background: '#211816' },
+  { key: 'base', name: 'Benom', background: mix('#000000', '#ffffff', 0.10), uiBackground: mix('#000000', '#ffffff', 0.02) },
+  { key: 'alt', name: 'Benom Alt', background: mix('#211816', '#000000', 0.08), uiBackground: mix('#211816', '#000000', 0.40) },
 ];
+
+// Roles whose background is the editor-area background (the 5% shift). Every
+// other 'area' role keeps the original UI background.
+export const EDITOR_AREAS = new Set([
+  'editor.background',
+  'editorGutter.background',
+  'editorGroup.emptyBackground',
+  'tab.activeBackground',
+  'breadcrumb.background',
+  'peekViewEditor.background',
+  'peekViewEditorGutter.background',
+  'editorInlayHint.background',
+  'diffEditor.diagonalFill',
+]);
 
 // Contrast targets (docs/ARCHITECTURE.md). Roles not listed here use the
 // default of 4.5 unless a rule sets `target`.
@@ -174,11 +195,15 @@ export function mix(a, b, t) {
 /**
  * Build one variant. Every workbench key has a CLASS:
  * - text:    lifted by contrast (target vs the surface it sits on).
- * - surface: mix(variantBackground, foreground, t) — never lifted.
- * - line:    mix(variantBackground, foreground, t) — never lifted.
- * - chrome:  mix(variantBackground, #000000, 0.25).
- * - area:    the variant background itself.
+ * - surface: mix(background, foreground, t) — never lifted.
+ * - line:    mix(background, foreground, t) — never lifted.
+ * - chrome:  mix(uiBackground, #000000, 0.25).
+ * - area:    the editor-area background for EDITOR_AREAS roles, the UI
+ *            background for every other area.
  * - accent:  the palette color, used as-is (fidelity).
+ *
+ * For surface and line roles, `background` is the editor-area background
+ * for editor.* and EDITOR_AREAS roles, and the UI background otherwise.
  *
  * Returns { colors, tokenColors, semanticTokenColors, surfaceLog } where
  * surfaceLog lists the derived surface/line roles with their t and ratios.
@@ -262,9 +287,9 @@ function buildVariant(variant, palette, textLiftLog, surfaceLog) {
 /**
  * Per-variant overrides for surface mix factors (t).
  *
- * The base variant's editor.background is pure black (#000000), so the
- * default line-highlight t (0.05) yields #0a0a0a, which is invisible
- * on black. The base variant uses t 0.09 (about #111111) instead.
+ * The base variant's editor background is #1a1a1a (10% lighter), so the
+ * default line-highlight t (0.05) yields #222222, which is nearly
+ * invisible on it. The base variant uses t 0.09 (about #292929) instead.
  * The alt variant keeps the default t.
  */
 const SURFACE_T_OVERRIDES = {
@@ -290,23 +315,25 @@ function deriveColor(rule, variant, palette, liftCache, mixFg, textLiftLog, surf
     }
     case 'surface': {
       const t = surfaceT(rule, variant);
-      const color = mix(variant.background, mixFg, t);
-      surfaceLog.add(rule.id, 'surface', t, variant.key, color, contrast(color, variant.background), contrast(palette.core.fg, color));
+      const bg = EDITOR_AREAS.has(rule.id) || rule.id.startsWith('editor.') ? variant.background : variant.uiBackground;
+      const color = mix(bg, mixFg, t);
+      surfaceLog.add(rule.id, 'surface', t, variant.key, color, contrast(color, bg), contrast(palette.core.fg, color));
       return color;
     }
     case 'line': {
       const t = surfaceT(rule, variant);
-      const color = mix(variant.background, mixFg, t);
-      surfaceLog.add(rule.id, 'line', t, variant.key, color, contrast(color, variant.background), null);
+      const bg = EDITOR_AREAS.has(rule.id) || rule.id.startsWith('editor.') ? variant.background : variant.uiBackground;
+      const color = mix(bg, mixFg, t);
+      surfaceLog.add(rule.id, 'line', t, variant.key, color, contrast(color, bg), null);
       return color;
     }
     case 'chrome': {
-      const color = mix(variant.background, '#000000', CHROME_T);
-      surfaceLog.add(rule.id, 'chrome', CHROME_T, variant.key, color, contrast(color, variant.background), null);
+      const color = mix(variant.uiBackground, '#000000', CHROME_T);
+      surfaceLog.add(rule.id, 'chrome', CHROME_T, variant.key, color, contrast(color, variant.uiBackground), null);
       return color;
     }
     case 'area':
-      return variant.background;
+      return EDITOR_AREAS.has(rule.id) ? variant.background : variant.uiBackground;
     case 'accent':
       return paletteValue(rule.paletteKey, palette);
     default:
